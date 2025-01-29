@@ -2,7 +2,7 @@ Under er lenker til hjelperessurser og tutorials for diverse frameworks:
 
 ## Useful resources
 - [About React and Next.JS](https://nextjs.org/learn/react-foundations/what-is-react-and-nextjs) - En god guide til hvordan React og Next.js fungerer
-- [Create a next.js test-app](https://nextjs.org/learn/pages-router/create-nextjs-app-setup) - En litt lengre step-by-step tutorial til hvordan man lager en next.js (Gjør deg om du har tid eller sjekk ut ulike steps for forklaring på hvordan ting fungerer)
+- [Create a next.js test-app](https://nextjs.org/learn/pages-router/create-nextjs-app-setup) - En litt lengre step-by-step tutorial til hvordan man lager en next.js app (Gjør det om du har tid eller bla til et spesifikk step for å få forklaring på det du lurer på)
 
 ## Learn More
 To learn more about Next.js, take a look at the following resources:
