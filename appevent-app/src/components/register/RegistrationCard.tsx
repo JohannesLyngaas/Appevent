@@ -1,33 +1,60 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@radix-ui/react-tooltip";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+import { BackButton } from "@/components/register/BackButton";
 
 function RegistrationCard() {
 
+  {/* Under er en enkel komponent med:
+    - Knapp for å fortsette med google
+    - Input-felt for hvis bruker ønsker å registrere bruker med mail
+    - Card er et komponent hented fra shadcn, du kan importere det fra UI folderen i /components/card
+    for eget bruk.
+    - Samme med icons og button komponenten.
+    - Knappene (buttons) har foreløpig ingen funksjonalitet, bortsett fra 'tilbake-knappen'.
+     */}
 
   return (
-    <Card className="flex flex-col items-center rounded-xl ~w-72/80 ~h-80/96 ~px-1/4 ~py-1/4">
-      <CardHeader>
-      <CardTitle className="~text-2xl/3xl">Registrer bruker</CardTitle>
+    <Card className="rounded-xl ~w-72/80 ~px-1/4 ~py-1/4">
+      <BackButton />
+      <CardHeader className="gap-1">
+        <Button variant={"outline"} className="~text-base/xl">
+          <Icons.google/>
+          Fortsett med Google
+        </Button>
+        <div>
+          <p className="text-center ~text-base/xl mt-2.5">eller</p>
+        </div>
+        <CardTitle className="~text-xl/2xl text-center">Registrer bruker</CardTitle>
       </CardHeader>
-      <CardContent>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant={"outline"} className="">
-                <Icons.google />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="p-1 bg-slate-950 text-white rounded-sm ~text-xs/sm ">
-              <p>Continue with Google</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-
-
+      <CardContent className="flex flex-col gap-1">
+        <div>
+          <Label htmlFor="name">
+            Navn
+          </Label>
+          <Input id="name" type="text" placeholder="navn" maxLength={10} required/>
+        </div>
+        <div>
+          <Label htmlFor="name">
+            Etternavn
+          </Label>
+          <Input id="surname" type="text" placeholder="navnesen" required/>
+        </div>
+        <div>
+          <Label htmlFor="email">
+            Mail
+          </Label>
+          <Input id="email" type="email" placeholder="m@example.com" required/>
+        </div>
       </CardContent>
+      <CardFooter>
+        <Button variant={"outline"} className="w-full ~text-base/xl">
+          Lag bruker
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

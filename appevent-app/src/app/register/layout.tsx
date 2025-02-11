@@ -9,7 +9,9 @@ export default async function RegistrationLayout({
 
   return (
     <>
-    {children}
+    <div className="flex items-center justify-center size-full">
+      {children}
+    </div>
     </>
   )
 }
