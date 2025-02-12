@@ -8,10 +8,13 @@ export default function RootLayout({
   children,
 }: DefaultLayoutProps) {
   return (
-    <html lang="en">
-      <body
-        className={`antialiased`}>
-        {children}
+    <html lang="en"
+    className='size-full scroll-smooth'
+    >
+      <body className='antialiased size-full'>
+        <div className='flex flex-col size-full'>
+          {children}
+        </div>
       </body>
     </html>
   );
