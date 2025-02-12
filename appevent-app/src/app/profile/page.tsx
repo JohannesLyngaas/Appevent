@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase";
+import { auth, db } from "../firebase";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
-import ProfileHeader from "@/components/profile/ProfileHeader";
+import ProfileHeader from "@/app/profile/ProfileHeader";
 import ProfileArrangements from "@/components/profile/ProfileArrangements";
 import ProfileEvents from "@/components/profile/ProfileEvents";
 
