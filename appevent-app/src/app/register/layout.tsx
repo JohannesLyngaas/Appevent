@@ -1,4 +1,3 @@
-
 type RegistrationLayoutProps = {
   children: React.ReactNode;
 };
