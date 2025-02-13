@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { testFirestore } from "@/firebase/firebaseTest"; // Bruk absolutte stier
+import { testFirestore } from "@/lib/firebase/firebaseTest"; // Bruk absolutte stier
 
 export default function Home() {
   useEffect(() => {
