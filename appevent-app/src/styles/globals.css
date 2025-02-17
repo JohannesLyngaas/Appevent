@@ -6,6 +6,7 @@
   :root {
     --background: 67 57% 86%;
     --foreground: 0 0 9%;
+    --navbar: 74 19% 54%;
     --placeholder: 67 19% 50%;
     --card: 74 32% 76%;
     --card-foreground: 0 0% 3.9%;
@@ -38,6 +39,7 @@
     :root {
       --background: 0 0% 3.9%;
       --foreground: 0 0% 98%;
+      --navbar: 0 0% 3.9%;
       --placeholder: 0 0% 100%;
       --card: 0 0% 3.9%;
       --card-foreground: 0 0% 98%;

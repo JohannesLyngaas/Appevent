@@ -31,7 +31,8 @@ export default {
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
-				placeholder: 'hsl(var(--placeholder))',
+			navbar: 'hsl(var(--navbar))',
+			placeholder: 'hsl(var(--placeholder))',
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
