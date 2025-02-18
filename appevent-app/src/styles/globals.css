@@ -4,9 +4,11 @@
 
 @layer base {
   :root {
-    --background: 72 61% 81%;
+    --background: 67 57% 86%;
     --foreground: 0 0 9%;
-    --card: 57 66% 82%;
+    --navbar: 74 19% 54%;
+    --placeholder: 67 19% 50%;
+    --card: 74 32% 76%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
@@ -20,8 +22,10 @@
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
+    --border: 67 19% 50%;
+    --input: 65 100% 98%;
+    --button: 67 19% 50%;
+    --text: 67 19% 50%;
     --ring: 0 0% 3.9%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -35,6 +39,8 @@
     :root {
       --background: 0 0% 3.9%;
       --foreground: 0 0% 98%;
+      --navbar: 0 0% 3.9%;
+      --placeholder: 0 0% 100%;
       --card: 0 0% 3.9%;
       --card-foreground: 0 0% 98%;
       --popover: 0 0% 3.9%;
@@ -51,6 +57,8 @@
       --destructive-foreground: 0 0% 98%;
       --border: 0 0% 14.9%;
       --input: 0 0% 14.9%;
+      --button: 67 19% 50%;
+      --text: 0 0% 100%;
       --ring: 0 0% 83.1%;
       --chart-1: 220 70% 50%;
       --chart-2: 160 60% 45%;
