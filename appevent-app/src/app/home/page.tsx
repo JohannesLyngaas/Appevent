@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
-import HomepageCard from "@/components/home/HomepageCard"
+import HomepageCard from "@/components/home/HomepageCard";
+
 
 // Midlertidig liste over arrangementer for å visualisere designet
 // Senere skal denne hentes dynamisk fra create_events når backend er koblet til
@@ -13,9 +14,6 @@ const upcomingEvents = [
 ]
 
 export default function Home() {
-  useEffect(() => {
-    testFirestore();
-  }, []);
 
   return (
     
