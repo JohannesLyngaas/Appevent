@@ -16,8 +16,8 @@ const upcomingEvents = [
 export default function Home() {
 
   return (
-    
-    <section className="text-center mb-12">
+
+    <section className="size-full text-center mb-12">
       <h2 className="text-4xl font-bold mb-4">Oppdag Spennende Arrangementer</h2>
       <p className="text-xl mb-6">Finn og skap uforglemmelige opplevelser i ditt område</p>
 
