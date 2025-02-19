@@ -9,6 +9,9 @@ const Navbar = () => {
       </Link>
 
       <div className="flex space-x-4">
+        <Link href="/create_event" className="px-3 py-1 text-white hover:underline">
+          Opprett arrangement
+        </Link>
         <Link href="/login" className="text-primary bg-white px-3 py-1 rounded hover:bg-primary/90 hover:text-white">
           Logg inn
         </Link>
