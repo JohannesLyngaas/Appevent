@@ -13,7 +13,7 @@ import {
   parseISO,
 } from "date-fns";
 
-// Mock data for events 
+// Mock data for events
 const events = [
   {
     id: 1,
@@ -67,7 +67,7 @@ export function CalendarView() {
       currentDate.getMonth(),
       day
     );
-    return isSameDay(checkDate, parseISO("2025-02-18"));
+    return isSameDay(checkDate, new Date());
   };
 
   return (
