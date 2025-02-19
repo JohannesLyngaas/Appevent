@@ -10,16 +10,27 @@ Sørg for at du har følgende installert:
 
 Terminal kommandoer for å kjøre development server (få opp nettsiden på browser):
 ```bash
-# Sørg for at du er i 'appevent-app'-folderen:
-cd appevent-app
 
-# Deretter:
 # 1. Kjør:
 npm install
 
 # 2. Kjør deretter:
 npm run dev
 
+# Hvis det er første gangen du kjører appen kjør følgende for å bygge prosjektet:
+npm run build
+
 ```
 
 Åpne deretter [http://localhost:3000](http://localhost:3000) på din browser for å se web-applikasjonen, og eventuelle endringer du gjør i sanntid.
+
+## Forklaring på kommandoene:
+### npm install
+Henter og laster ned alt som trengs for at prosjektet og nettsiden skal fungere på din PC, basert på en liste med nødvendige ting.
+Kjør dette første gang du laster ned prosjektet, eller hvis noe ikke virker.
+### npm run dev
+Starter en testversjon av nettsiden på din egen PC, slik at du kan se og prøve den mens du jobber, og endringer vises med én gang.
+Kjør dette når du jobber med nettsiden.
+### npm run build
+Lager en ferdig og rask versjon av nettsiden som kan publiseres på internett.
+Kjør dette når du er klar til å legge ut nettsiden.
