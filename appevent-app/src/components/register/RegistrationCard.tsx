@@ -1,8 +1,13 @@
+'use client'
+
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+
+import { signInWithGoogle, signOutWithGoogle } from '@/lib/firebase/auth';
+import { createSession } from '@/lib/firebase/auth-actions';
 
 import { BackButton } from "@/components/register/BackButton";
 
@@ -17,12 +22,19 @@ function RegistrationCard() {
     - Knappene (buttons) har foreløpig ingen funksjonalitet, bortsett fra 'tilbake-knappen'.
      */}
 
+  const handleSignIn = async () => {
+    const userUid = await signInWithGoogle();
+    if (userUid) {
+      await createSession(userUid);
+    }
+  };
+
   return (
     <Card className="rounded-xl ~w-72/80 ~px-1/4 ~py-1/4">
       <BackButton />
       <CardHeader className="gap-1">
-        <Button variant={"outline"} className="~text-base/xl">
-          <Icons.google/>
+        <Button variant={ "outline" } className="~text-base/xl" onClick={handleSignIn}>
+          <Icons.google />
           Fortsett med Google
         </Button>
         <div>
@@ -35,23 +47,23 @@ function RegistrationCard() {
           <Label htmlFor="name">
             Navn
           </Label>
-          <Input id="name" type="text" placeholder="navn" maxLength={10} required/>
+          <Input id="name" type="text" placeholder="navn" maxLength={ 10 } required />
         </div>
         <div>
           <Label htmlFor="name">
             Etternavn
           </Label>
-          <Input id="surname" type="text" placeholder="navnesen" required/>
+          <Input id="surname" type="text" placeholder="navnesen" required />
         </div>
         <div>
           <Label htmlFor="email">
             Mail
           </Label>
-          <Input id="email" type="email" placeholder="m@example.com" required/>
+          <Input id="email" type="email" placeholder="m@example.com" required />
         </div>
       </CardContent>
       <CardFooter>
-        <Button variant={"outline"} className="w-full ~text-base/xl">
+        <Button variant={ "outline" } className="w-full ~text-base/xl">
           Lag bruker
         </Button>
       </CardFooter>

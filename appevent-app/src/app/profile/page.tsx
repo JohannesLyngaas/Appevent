@@ -4,9 +4,7 @@ import Profil from "./Profil";
 
 export default function ProfilePage() {
   return (
-
     <Profil />
-
   )
 }
 
