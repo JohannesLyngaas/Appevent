@@ -1,11 +1,11 @@
 import { getFirestore, collection, getDocs } from "firebase/firestore";
-import app from "./firebaseConfig"; // Riktig sti
+import { firebaseApp } from '@/lib/firebase/config';
 
-const db = getFirestore(app);
+const dataBase = getFirestore(firebaseApp);
 
 export const testFirestore = async () => {
   try {
-    const querySnapshot = await getDocs(collection(db, "testCollection"));
+    const querySnapshot = await getDocs(collection(dataBase, "testCollection"));
     querySnapshot.forEach((doc) => {
       console.log(`${doc.id} =>`, doc.data());
     });
