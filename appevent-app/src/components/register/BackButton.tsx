@@ -8,6 +8,7 @@ function BackButton() {
   // Tooltip er tekst som dukker opp når man har musen over for eks knapp. Denne er hentet fra https://ui.shadcn.com/docs/components/tooltip
   // Disse sidene tilbyr eksempel kode og andre komponenter, og forklarer hvordan man henter komponentene
   // Komponenter brukt her fra shadcn er lagt til i UI mappen, disse trengs ikke å hentes på nytt. */}
+  
   return (
     <TooltipProvider>
     <Tooltip>
