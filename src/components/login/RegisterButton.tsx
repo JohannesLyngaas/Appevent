@@ -8,7 +8,7 @@ function RegisterButton() {
     <div className="text-center text-sm text-gray-500">
       Ny hos oss?
       <Link href="/register">
-        <Button variant="link" className="text-blue-500 hover:underline ml-1">
+        <Button variant="link" className="text-blue-500 underline ml-1">
           Registrer deg nå!
         </Button>
       </Link>
