@@ -34,3 +34,32 @@ Kjør dette når du jobber med nettsiden.
 ### npm run build
 Lager en ferdig og rask versjon av nettsiden som kan publiseres på internett.
 Kjør dette når du er klar til å legge ut nettsiden.
+
+
+
+## Hvordan bruke test-versjonen av firebase
+Se bort fra denne delen om du ikke trenger å sende noe til firebase.
+
+For å unngå å sende masse brukerkontoer, ment for testing osv til databasen og firebase, kjører vi kommandoene under for å få opp testversjonen av firebase. Testversjonen lagrer ikke data og vi unngår å nå maks grense for gratis firebase.
+
+```bash
+# 1. Slå på firebase testVersjon:
+Naviger til /src/lib/firebase/config.ts og endre "const useEmulators = false;" fra false til true.
+
+# 2. Kjør:
+npm run dev
+
+# 3. Kjør deretter
+firebase emulators:start --project demo-firebase
+
+## Om du opplever noen problemer, kjør
+
+rm -rf .next
+npm run dev
+
+# og deretter i et annet terminal
+firebase emulators:start --project demo-firebase
+
+```
+
+NB! Husk og sette "const useEmulators" til false igjen etter at du er ferdig.
