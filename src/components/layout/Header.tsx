@@ -3,22 +3,23 @@
 import Link from "next/link";
 import { useUserSession } from '@/hooks/user-user-session';
 import { signOutUser } from '@/lib/firebase/auth';
-import { removeSession } from '@/lib/firebase/auth-actions';
+import { removeSession } from '@/lib/firebase/sessionHandling';
 import { Button } from "../ui/button";
+
 
 type HeaderProps = {
   session: string | null;
 }
 
 export function Header({ session }: HeaderProps) {
-  const userSessionId = useUserSession(session);
+  const userSession = useUserSession(session);
 
   {/* Denne funksjonen henter en funksjon fra lib/auth.ts og auth-actions og sier
     til den hentede funksjonen hva som skal skje hvis bruker trykker på "logg ut"
     knappen. - Moa  */}
   const handleSignOut = async () => {
-      await signOutUser();
-      await removeSession();
+    await signOutUser();
+    await removeSession();
   };
 
   return (
@@ -35,7 +36,13 @@ export function Header({ session }: HeaderProps) {
         </Link>
 
 
-        { !userSessionId ? (
+        { userSession?.role === "admin" && (
+          <Link href="/admin">
+            <Button variant="outline">Admin</Button>
+          </Link>
+        ) }
+
+        { !userSession ? (
           <Link href="/login" >
             <Button>
               Logg inn
