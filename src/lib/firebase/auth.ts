@@ -28,9 +28,8 @@ export function onAuthStateChanged(callback: (authUser: User | null) => void) {
   api stuff. Disse blir for eksempel hentet inn i header komponenten
   for å brukes videre i siden  */}
 export async function signInWithGoogle() {
-  const provider = new GoogleAuthProvider();
-
   try {
+    const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(firebaseAuth, provider);
     const user = result.user;
 
@@ -42,7 +41,11 @@ export async function signInWithGoogle() {
         await setDoc(userRef, {
           email: user.email,
           userName: user.displayName,
+          firstName: "empty",
+          lastName: "empty",
           createdAt: new Date(),
+          banned: false,
+          role: "user"
         })
       }
     }
@@ -81,7 +84,9 @@ export async function registerWithEmail(
       firstName,
       lastName,
       userName: `${firstName} ${lastName}`,
-      createdAt: new Date()
+      createdAt: new Date(),
+      banned: false,
+      role: "user"
     });
     return user;
   } catch (e) {
