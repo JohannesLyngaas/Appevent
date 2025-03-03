@@ -1,5 +1,13 @@
 import { Timestamp } from "firebase/firestore";
 
+/**
+ * Når man henter inn tid variabler fra firebase databsen vil se være på en viss format
+ * og se ganske wack ut, en du kan bruke funksjonen under for å bestemme formattet på variabelen
+ * som du ønsker å presentere på siden din. For eks hvis du ønsker å bare hvis tiden og ikke
+ * måned, år osv.
+ * kan du hente funksjonen til din side og skrive for eks: "formatTimestamp(event.startTime, "time")
+ * da vises bare tiden og ikke datoen. 
+ */
 type FormatOption = "time" | "fullDate" | "day" | "month" | "year" | "dayMonth" | "monthYear";
 
 export function formatTimestamp(

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Shield, ShieldAlert, Ban, UserCheck } from "lucide-react"
-import { getAllUsers, promoteDemoteUser, banUser } from "@/lib/firebase/superbruker"
+import { getAllUsers, promoteDemoteUser, banUser } from "@/lib/firebase/DatabaseFunksjoner"
 import ConfirmBox from "@/components/superbruker/confirmBox"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
@@ -12,13 +12,23 @@ import { Badge } from "@/components/ui/badge"
 import type { User } from "@/types"
 import { formatTimestamp } from "@/utils/formatTimestamp"
 
+/**
+ * Komponenten under henter alle brukere fra firebase/firestore databasen
+ * og legger dem i en liste som blir presentert for brukere med admin-rettigheter
+ * og bare de, admin kan utestenge brukere, gi dem admin rolle osv.
+ *  */
 export default function UsersTable() {
+  {/** konstantene under kombinert med useState funksjonen fra react brukes til å
+    sjekke om det skjer endringer på siden. For eks hvis admin velger å utestenge en bruker
+    vil funksjonen handleBanUser() lengre ned bruke const [actionType, setActionType]
+    for om personen skal utestenges eller om admin vil fjerne utestengelse for en bruker. */}
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [actionType, setActionType] = useState<"promote" | "ban" | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -135,12 +145,12 @@ export default function UsersTable() {
         <Input
           placeholder="Søk brukere..."
           className="max-w-xs"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={ searchTerm }
+          onChange={ (e) => setSearchTerm(e.target.value) }
         />
       </div>
 
-      {users.length === 0 ? (
+      { users.length === 0 ? (
         <div className="text-center p-8 border rounded-lg">Ingen brukere funnet.</div>
       ) : filteredUsers.length === 0 ? (
         <div className="text-center p-8 border rounded-lg">Ingen brukere funnet som matcher dette søket.</div>
@@ -159,71 +169,71 @@ export default function UsersTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id} className={user.banned ? "bg-muted/50" : ""}>
-                  <TableCell className="font-medium">{user.userName || "N/A"}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
+              { filteredUsers.map((user) => (
+                <TableRow key={ user.id } className={ user.banned ? "bg-muted/50" : "" }>
+                  <TableCell className="font-medium">{ user.userName || "N/A" }</TableCell>
+                  <TableCell>{ user.email }</TableCell>
+                  <TableCell>{ `${user.firstName} ${user.lastName}` }</TableCell>
                   <TableCell>
-                    {user.role === "admin" ? (
+                    { user.role === "admin" ? (
                       <Badge variant="destructive" className="">
                         Admin
                       </Badge>
                     ) : (
                       <Badge variant="default">Bruker</Badge>
-                    )}
+                    ) }
                   </TableCell>
-                  <TableCell>{formatTimestamp(user.createdAt)}</TableCell>
+                  <TableCell>{ formatTimestamp(user.createdAt) }</TableCell>
                   <TableCell>
-                    {user.banned ? (
+                    { user.banned ? (
                       <Badge variant="destructive">Utestengt</Badge>
                     ) : (
                       <Badge variant="default" className="border-green-200">
                         Aktiv
                       </Badge>
-                    )}
+                    ) }
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
-                        variant={user.role === "admin" ? "outline" : "default"}
+                        variant={ user.role === "admin" ? "outline" : "default" }
                         size="icon"
-                        onClick={() => openActionDialog(user, "promote")}
-                        title={user.role === "admin" ? "Sett som bruker" : "Sett som admin"}
+                        onClick={ () => openActionDialog(user, "promote") }
+                        title={ user.role === "admin" ? "Sett som bruker" : "Sett som admin" }
                       >
-                        {user.role === "admin" ? (
+                        { user.role === "admin" ? (
                           <ShieldAlert className="h-4 w-4" />
                         ) : (
                           <Shield className="h-4 w-4" />
-                        )}
+                        ) }
                       </Button>
                       <Button
-                        variant={user.banned ? "outline" : "destructive"}
+                        variant={ user.banned ? "outline" : "destructive" }
                         size="icon"
-                        onClick={() => openActionDialog(user, "ban")}
-                        title={user.banned ? "Fjern utestengelse" : "Utesteng"}
+                        onClick={ () => openActionDialog(user, "ban") }
+                        title={ user.banned ? "Fjern utestengelse" : "Utesteng" }
                       >
-                        {user.banned ? <UserCheck className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                        { user.banned ? <UserCheck className="h-4 w-4" /> : <Ban className="h-4 w-4" /> }
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) }
             </TableBody>
           </Table>
         </div>
-      )}
+      ) }
 
       <ConfirmBox
-        isOpen={isDialogOpen}
-        onClose={() => {
+        isOpen={ isDialogOpen }
+        onClose={ () => {
           setIsDialogOpen(false)
           setSelectedUser(null)
           setActionType(null)
-        }}
-        onConfirm={handleConfirmAction}
-        title={getDialogContent().title}
-        description={getDialogContent().description}
+        } }
+        onConfirm={ handleConfirmAction }
+        title={ getDialogContent().title }
+        description={ getDialogContent().description }
       />
     </div>
   )

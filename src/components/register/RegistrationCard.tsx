@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { createSession } from '@/lib/firebase/sessionHandling';
+import { createSession } from '@/lib/firebase/auth/sessionHandling';
 import { BackButton } from "@/components/register/BackButton";
 import { Separator } from "@/components/ui/separator";
 
