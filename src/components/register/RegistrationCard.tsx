@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from 'next/navigation'
 import { registerWithEmail, signInWithGoogle } from "@/lib/firebase/auth";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { createSession } from '@/lib/firebase/auth-actions';
+import { createSession } from '@/lib/firebase/sessionHandling';
 import { BackButton } from "@/components/register/BackButton";
 import { Separator } from "@/components/ui/separator";
 
@@ -29,6 +29,7 @@ function RegistrationCard() {
   const [password, setPassword] = useState<string>("");
   const [bekreftPassword, setBekreftPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   async function handleEmailSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -46,7 +47,7 @@ function RegistrationCard() {
       const user = await registerWithEmail(firstName, lastName, email, password);
       if (user?.uid) {
         await createSession(user.uid);
-        redirect("/");
+        router.push("/");
       }
     } catch (e) {
       if (e instanceof Error && !e.message.toLowerCase().includes("redirect")) setError(e.message);
@@ -58,6 +59,7 @@ function RegistrationCard() {
       const userUid = await signInWithGoogle();
       if (userUid) {
         await createSession(userUid);
+        router.push("/");
       }
     } catch (e) {
       if (e instanceof Error) setError(`Registrering mislyktes:  ${e.message}`);

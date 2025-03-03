@@ -7,10 +7,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from 'next/navigation'
 import { RegisterButton } from "@/components/login/RegisterButton"; // Importer RegisterButton
 import { BackButton } from "@/components/login/BackButton";
-import { createSession } from '@/lib/firebase/auth-actions';
+import { createSession } from '@/lib/firebase/sessionHandling';
 import { signInWithGoogle, signInWithUsernameOrEmail } from "@/lib/firebase/auth";
 import { Icons } from "../ui/icons";
 import { Separator } from "@/components/ui/separator";
@@ -19,12 +19,13 @@ function LoginCard() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleGoogleSingIn = async () => {
     const userUid = await signInWithGoogle();
     if (userUid) {
       await createSession(userUid);
-      redirect("/")
+      router.push("/");
     }
   };
 
@@ -34,7 +35,7 @@ function LoginCard() {
       const user = await signInWithUsernameOrEmail(email, password);
       if (user.uid) {
         await createSession(user.uid);
-        redirect("/")
+        router.push("/");
       }
     } catch (e) {
       if (e instanceof Error && !e.message.toLowerCase().includes("redirect")) setError(e.message);
