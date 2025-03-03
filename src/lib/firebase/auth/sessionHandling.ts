@@ -1,7 +1,7 @@
 "use server"
 
 import { cookies } from "next/headers"
-import { SESSION_COOKIE_NAME } from "@/lib/firebase/constants"
+import { SESSION_COOKIE_NAME } from "@/lib/constants"
 
 export async function createSession(uid: string) {
   (await cookies()).set(SESSION_COOKIE_NAME, uid, {

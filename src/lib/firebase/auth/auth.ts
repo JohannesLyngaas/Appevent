@@ -6,7 +6,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from 'firebase/auth';
-import { generateFirebaseAuthErrorMessage } from '@/lib/firebase/errorHandler';
+import { generateFirebaseAuthErrorMessage } from '@/utils/errorHandler';
 import { firebaseDb } from "./config";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 

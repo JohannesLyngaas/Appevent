@@ -2,6 +2,12 @@ import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { initializeApp, getApps } from 'firebase/app';
 
+/**
+ * Sett useEmulators til true om du vil bruke testversjonen av databasen.
+ * Husk at du må kjøre test versjonen i en egen terminal i tillegg til å ha oppe en terminal for
+ * npm run dev. Spør meg om du trenger å endre på noe her
+ * eller vil vite hvordan test versjonen fungerer. -Moa
+ */
 const useEmulators = false;
 
 function getCorrectConfigt() {
