@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useUserSession } from '@/hooks/user-user-session';
-import { signOutUser } from '@/lib/firebase/auth';
+import { signOutUser } from '@/lib/firebase/auth/auth';
 import { removeSession } from '@/lib/firebase/auth/sessionHandling';
 import { Button } from "../ui/button";
 

@@ -1,6 +1,6 @@
-import { firebaseDb } from "./config"
-import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from "firebase/firestore"
-import type { User, Event, EventParticipant, Comment, Report } from "@/types"
+import { firebaseDb } from "@/lib/firebase/config";
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from "firebase/firestore";
+import type { User, Event, EventParticipant, Comment, Report } from "@/types";
 
 
 /**

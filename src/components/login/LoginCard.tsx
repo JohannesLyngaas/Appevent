@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation'
 import { RegisterButton } from "@/components/login/RegisterButton"; // Importer RegisterButton
 import { BackButton } from "@/components/login/BackButton";
 import { createSession } from '@/lib/firebase/auth/sessionHandling';
-import { signInWithGoogle, signInWithUsernameOrEmail } from "@/lib/firebase/auth";
+import { signInWithGoogle, signInWithUsernameOrEmail } from "@/lib/firebase/auth/auth";
 import { Icons } from "../ui/icons";
 import { Separator } from "@/components/ui/separator";
 

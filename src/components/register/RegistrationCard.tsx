@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from 'next/navigation'
-import { registerWithEmail, signInWithGoogle } from "@/lib/firebase/auth";
+import { registerWithEmail, signInWithGoogle } from "@/lib/firebase/auth/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
