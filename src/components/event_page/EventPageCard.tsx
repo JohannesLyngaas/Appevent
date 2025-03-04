@@ -55,7 +55,9 @@ export function EventPageCard() {
     const defaultEvent = {
       title: "Tittel på arrangement",
       eventDate: new Date().toISOString().split("T")[0],
+      endDate: new Date().toISOString().split("T")[0],
       startTime: "18:00",
+      endTime: "20:00",
       location: "Trondheim",
       description: "Velkommen til mitt første arrangement! Ta med godt humør.",
       imageUrl: "",
@@ -88,13 +90,43 @@ export function EventPageCard() {
 
         <div className="flex flex-row gap-x-20 mt-8">
           <div className="flex flex-col text-xl text-[#96A074]">
-            <span>Klokkeslett</span>
-            <div className="flex gap-x-2">
-              <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
-                {new Date(defaultEvent.eventDate).toLocaleDateString("no-NO")}
+            <div className="flex flex-col gap-y-4">
+              <div className="flex flex-col gap-y-1">
+                <span className="font-medium">Fra:</span>
+                <div className="flex gap-x-2">
+                  <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
+                    {new Date(defaultEvent.eventDate).toLocaleDateString(
+                      "no-NO"
+                    )}
+                  </div>
+                  <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
+                    {defaultEvent.startTime}
+                  </div>
+                </div>
               </div>
-              <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
-                {defaultEvent.startTime}
+              <div className="flex flex-col gap-y-1">
+                <span className="font-medium">Til:</span>
+                {defaultEvent.endTime && defaultEvent.endTime.trim() !== "" ? (
+                  <div className="flex gap-x-2">
+                    <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
+                      {defaultEvent.endDate &&
+                      defaultEvent.endDate.trim() !== ""
+                        ? new Date(defaultEvent.endDate).toLocaleDateString(
+                            "no-NO"
+                          )
+                        : new Date(defaultEvent.eventDate).toLocaleDateString(
+                            "no-NO"
+                          )}
+                    </div>
+                    <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
+                      {defaultEvent.endTime}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-10 flex items-center text-xl">
+                    <span className="italic">Ingen definert sluttid</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -158,13 +190,37 @@ export function EventPageCard() {
 
       <div className="flex flex-row gap-x-20 mt-8">
         <div className="flex flex-col text-xl text-[#96A074]">
-          <span>Klokkeslett</span>
-          <div className="flex gap-x-2">
-            <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
-              {new Date(event.eventDate).toLocaleDateString("no-NO")}
+          <div className="flex flex-col gap-y-4">
+            <div className="flex flex-col gap-y-1">
+              <span className="font-medium">Fra:</span>
+              <div className="flex gap-x-2">
+                <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
+                  {new Date(event.eventDate).toLocaleDateString("no-NO")}
+                </div>
+                <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
+                  {event.startTime}
+                </div>
+              </div>
             </div>
-            <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
-              {event.startTime}
+
+            <div className="flex flex-col gap-y-1">
+              <span className="font-medium">Til:</span>
+              {event.endTime && event.endTime.trim() !== "" ? (
+                <div className="flex gap-x-2">
+                  <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
+                    {event.endDate && event.endDate.trim() !== ""
+                      ? new Date(event.endDate).toLocaleDateString("no-NO")
+                      : new Date(event.eventDate).toLocaleDateString("no-NO")}
+                  </div>
+                  <div className="h-10 text-center text-xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md px-4 py-1">
+                    {event.endTime}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-10 flex items-center text-xl">
+                  <span className="italic">Ingen definert sluttid</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
