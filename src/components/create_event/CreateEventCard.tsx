@@ -16,9 +16,9 @@ function CreateEventCard() {
     eventDate: "",
     startTime: "",
     endTime: "",
-    imageUrl: "", // This would be replaced with actual image URL after upload
+    imageUrl: "", // TODO: Legg til imageUrl
     visibility: "public" as const,
-    createdBy: "", // Would need to be set based on authenticated user
+    createdBy: "", // TODO: Legg til createdBy fra bruker som er logget inn
     invitedUsers: [],
   });
 
@@ -38,16 +38,16 @@ function CreateEventCard() {
     try {
       setIsSubmitting(true);
 
-      await createEvent({
+      // createEvent returnerer id-en til det nyopprettede arrangementet
+      const newEventId = await createEvent({
         ...formData,
         createdAt: new Date().toISOString(),
       });
 
-      // Redirect or show success message
-      router.push("/events"); // Redirect to events page
+      // Sender bruker til event_page med event ID som query parameter
+      router.push(`/event_page?id=${newEventId}`);
     } catch (error) {
       console.error("Error creating event:", error);
-      // Show error message to user
     } finally {
       setIsSubmitting(false);
     }
@@ -159,12 +159,6 @@ function CreateEventCard() {
         >
           {isSubmitting ? "Oppretter..." : "Opprett arrangement"}
         </Button>
-        <button
-          type="button"
-          className="p-2 rounded-lg bg-[#E34E4E] text-white border-[#c03737] border-2"
-        >
-          Slett arrangement
-        </button>
       </div>
     </form>
   );
