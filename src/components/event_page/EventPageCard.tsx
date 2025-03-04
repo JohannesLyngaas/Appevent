@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Users } from "lucide-react";
+import { Users, Lock, Globe } from "lucide-react";
 import { AttendanceButtonAlert } from "@/components/event_page/AttendanceButtonAlert";
 import { getAllEvents } from "@/lib/firebase/DatabaseFunksjoner";
 import { useSearchParams } from "next/navigation";
@@ -59,6 +59,7 @@ export function EventPageCard() {
       location: "Trondheim",
       description: "Velkommen til mitt første arrangement! Ta med godt humør.",
       imageUrl: "",
+      visibility: "public",
     };
 
     return (
@@ -66,6 +67,24 @@ export function EventPageCard() {
         <h1 className="h-20 mt-5 text-center text-4xl bg-[#FEFFF4] border-2 border-[#96A074] rounded-md w-fit px-8 py-4">
           {defaultEvent.title}
         </h1>
+
+        <div className="flex items-center gap-2 mt-2">
+          {defaultEvent.visibility === "private" ? (
+            <>
+              <Lock className="w-5 h-5 text-red-500" />
+              <span className="text-red-500 font-medium">
+                Privat arrangement
+              </span>
+            </>
+          ) : (
+            <>
+              <Globe className="w-5 h-5 text-[#96A074]" />
+              <span className="text-[#96A074] font-medium">
+                Offentlig arrangement
+              </span>
+            </>
+          )}
+        </div>
 
         <div className="flex flex-row gap-x-20 mt-8">
           <div className="flex flex-col text-xl text-[#96A074]">
@@ -120,6 +139,22 @@ export function EventPageCard() {
           {event.title}
         </h1>
       )}
+
+      <div className="flex items-center gap-2 mt-2">
+        {event.visibility === "private" ? (
+          <>
+            <Lock className="w-5 h-5 text-red-500" />
+            <span className="text-red-500 font-medium">Privat arrangement</span>
+          </>
+        ) : (
+          <>
+            <Globe className="w-5 h-5 text-[#96A074]" />
+            <span className="text-[#96A074] font-medium">
+              Offentlig arrangement
+            </span>
+          </>
+        )}
+      </div>
 
       <div className="flex flex-row gap-x-20 mt-8">
         <div className="flex flex-col text-xl text-[#96A074]">

@@ -5,6 +5,8 @@ import { Button } from "../ui/button";
 import { useState } from "react";
 import { createEvent } from "@/lib/firebase/DatabaseFunksjoner";
 import { useRouter } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 function CreateEventCard() {
   const router = useRouter();
@@ -17,7 +19,7 @@ function CreateEventCard() {
     startTime: "",
     endTime: "",
     imageUrl: "", // TODO: Legg til imageUrl
-    visibility: "public" as const,
+    visibility: "public" as "public" | "private",
     createdBy: "", // TODO: Legg til createdBy fra bruker som er logget inn
     invitedUsers: [],
   });
@@ -30,6 +32,13 @@ function CreateEventCard() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleVisibilityChange = (checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      visibility: checked ? "private" : "public",
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +54,7 @@ function CreateEventCard() {
       });
 
       // Sender bruker til event_page med event ID som query parameter
-      router.push(`/event_page?id=${newEventId}`);
+      router.push(`/event_page?id=${newEventId}&fromCreate=true`);
     } catch (error) {
       console.error("Error creating event:", error);
     } finally {
@@ -65,6 +74,21 @@ function CreateEventCard() {
                      text-4xl text-text"
         required
       />
+
+      {/* Visibility toggle switch */}
+      <div className="flex items-center justify-center gap-4 mt-4 w-full">
+        <Switch
+          id="event-visibility"
+          checked={formData.visibility === "private"}
+          onCheckedChange={handleVisibilityChange}
+          className="data-[state=checked]:bg-red-500 scale-125"
+        />
+        <Label htmlFor="event-visibility" className="text-text text-lg">
+          {formData.visibility === "public" ? "Offentlig" : "Privat"}{" "}
+          arrangement
+        </Label>
+      </div>
+
       <div className="flex flex-row gap-x-20 mt-8">
         <label className="flex flex-col text-xl text-text">
           Når?
