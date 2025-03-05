@@ -5,9 +5,9 @@ import { EventPageLayout } from "@/components/event_page/EventPageLayout";
 
 export default function EventPage() {
   return (
-      <EventPageLayout>
-        <CloseButton />
-        <EventPageCard />
-      </EventPageLayout>
+    <EventPageLayout>
+      <CloseButton />
+      <EventPageCard />
+    </EventPageLayout>
   );
 }

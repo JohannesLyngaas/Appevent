@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/Header";
-import { SESSION_COOKIE_NAME } from '@/lib/firebase/constants'; // added
+import { SESSION_COOKIE_NAME } from '@/lib/constants'; // added
 
 type DefaultLayoutProps = {
   children: React.ReactNode;

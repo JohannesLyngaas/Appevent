@@ -13,6 +13,8 @@ interface Event {
 // Komponent for å vise et arrangement som et kort
 // Tar inn et event-objekt og viser tittel, dato, tid, sted og antall deltakere
 export default function HomepageCard({ event }: { event: Event }) {
+  
+
   return (
     <Card key={event.id} className="hover:shadow-lg transition-shadow">
       <CardHeader>
