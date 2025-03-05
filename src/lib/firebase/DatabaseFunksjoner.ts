@@ -45,6 +45,14 @@ export async function getAllEvents(): Promise<Event[]> {
   });
 }
 
+/*export async function getEventByUser(userId: string) : Promise<string | null> {
+  const usersCollection = getal
+  const q = query(usersCollection, where("createdBy:", "==", userId));
+  const snapshot = await getDocs(q);
+  
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+}*/
+
 export async function removeEvent(eventId: string): Promise<void> {
   await deleteDoc(doc(firebaseDb, "events", eventId));
 }

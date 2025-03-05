@@ -36,25 +36,34 @@ export function Header({ session }: HeaderProps) {
         </Link>
 
 
-        { userSession?.role === "admin" && (
+        {userSession?.role === "admin" && (
           <Link href="/admin">
             <Button variant="outline">Admin</Button>
           </Link>
-        ) }
+        )}
+        {userSession &&
+          <Link href="/profile" className="">
+            <Button variant={'default'} >
+              Min profil
+            </Button>
+          </Link>
+        }
 
-        { !userSession ? (
+        {!userSession ? (
           <Link href="/login" >
             <Button>
               Logg inn
             </Button>
           </Link>
-        ) : (
+        ) : (  
+          
           <Link href="/login" className="">
-            <Button variant={ 'default' } onClick={ handleSignOut } >
+            <Button variant={'default'} onClick={handleSignOut} >
               Logg ut
             </Button>
           </Link>
-        ) }
+        )}
+
       </div>
     </div>
   )
