@@ -6,17 +6,25 @@ interface EventCardProps {
   title: string
   location: string
   imageUrl?: string
-  imageAlt: string
   date?: string
 }
 
 // Komponent for å vise et arrangement som et kort
-// Tar inn et event-objekt og viser tittel, dato, tid, sted og antall deltakere
-export default function EventCard({ title, location, imageUrl, imageAlt, date }: EventCardProps) {
+// Tar inn et EventCardProps-objekt og viser tittel, dato, tid, sted og antall deltakere
+export default function EventCard({ title, location, imageUrl, date }: EventCardProps) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg">
       <div className="relative h-auto w-full sm:h-64">
-        <Image src={imageUrl || "/placeholder.svg"} alt={imageAlt} fill className="object-cover" priority />
+      {/* Viser ikke noe bilde dersom imageUrl er null eller undefined */}
+      {imageUrl && (
+        <Image
+          src={imageUrl}
+          alt=""
+          fill
+          className="object-cover"
+          priority
+        />
+      )}
       </div>
       <CardContent className="p-4">
         {date && <p className="mb-2 text-sm font-medium text-muted-foreground">{date}</p>}
