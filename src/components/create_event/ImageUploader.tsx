@@ -97,8 +97,9 @@ export function ImageUploader({ onUploadSuccess, onDeleteSuccess }: ImageUploade
                 className="rounded-md max-w-[200px] max-h-[200px] object-cover"
               />
               <button
+                type="button"
                 onClick={handleDeleteImage}
-                className="text-red-500 hover:text-red-700 bg-transparent border border-red-500 rounded-md py-1 px-4 mt-2"
+                className="text-red-500 hover:text-white hover:bg-red-500 bg-transparent border border-red-500 rounded-md py-1 px-4 mt-2"
                 disabled={false}
               >
                 Slett bilde og erstatt
