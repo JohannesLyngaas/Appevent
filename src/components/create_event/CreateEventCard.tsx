@@ -336,11 +336,15 @@ function CreateEventCard() {
         required
       />
       <div className="mt-8 flex flex-col items-center">
-        <label className="text-xl text-text mb-2">Last opp bilde</label>
+        <label className="text-xl text-text mb-2">{uploadedImageUrl ? "Opplastet bilde:" : "Last opp bilde"}</label>
         <ImageUploader 
           onUploadSuccess={(url) => {
             setUploadedImageUrl(url);
             setFormData((prev) => ({ ...prev, imageUrl: url }));
+          }}
+          onDeleteSuccess={() => {
+            setUploadedImageUrl(null); 
+            setFormData((prev) => ({ ...prev, imageUrl: "" })); 
           }}/>
       </div>
       <div className="flex gap-4 my-10">

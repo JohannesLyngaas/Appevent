@@ -7,9 +7,10 @@ import { useState } from "react";
 
 interface ImageUploaderProps {
   onUploadSuccess: (url: string) => void;
+  onDeleteSuccess?: () => void;
 }
 
-export function ImageUploader({ onUploadSuccess }: ImageUploaderProps) {
+export function ImageUploader({ onUploadSuccess, onDeleteSuccess }: ImageUploaderProps) {
 
   const [uploadConfirmed, setUploadConfirmed] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | undefined>(undefined);
@@ -29,6 +30,10 @@ export function ImageUploader({ onUploadSuccess }: ImageUploaderProps) {
           setUploadedImageUrl(undefined); 
           setPublicId(undefined); 
           setUploadConfirmed(false); 
+
+          if (onDeleteSuccess) {
+            onDeleteSuccess();
+          }
         } else {
           alert("Error deleting image from Cloudinary.");
         }
@@ -89,14 +94,14 @@ export function ImageUploader({ onUploadSuccess }: ImageUploaderProps) {
                 alt="Uploaded image"
                 width={150}
                 height={150}
-                className="rounded-md"
+                className="rounded-md max-w-[200px] max-h-[200px] object-cover"
               />
               <button
                 onClick={handleDeleteImage}
                 className="text-red-500 hover:text-red-700 bg-transparent border border-red-500 rounded-md py-1 px-4 mt-2"
                 disabled={false}
               >
-                Delete Image
+                Slett bilde og erstatt
               </button>
             </div>
           )}
