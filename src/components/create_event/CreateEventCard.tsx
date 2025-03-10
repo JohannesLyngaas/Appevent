@@ -7,6 +7,7 @@ import { createEvent } from "@/lib/firebase/DatabaseFunksjoner";
 import { useRouter } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { ImageUploader } from "./ImageUploader";
 
 function CreateEventCard() {
   const router = useRouter();
@@ -14,6 +15,7 @@ function CreateEventCard() {
   const [dateError, setDateError] = useState(false);
   const [pastDateWarning, setPastDateWarning] = useState(false);
   const [noEndTime, setNoEndTime] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -22,7 +24,7 @@ function CreateEventCard() {
     endDate: "",
     startTime: "",
     endTime: "",
-    imageUrl: "", // TODO: Legg til imageUrl
+    imageUrl: "",
     visibility: "public" as "public" | "private",
     createdBy: "", // TODO: Legg til createdBy fra bruker som er logget inn
     invitedUsers: [],
@@ -61,6 +63,8 @@ function CreateEventCard() {
         name === "endTime" ? value : formData.endTime
       );
     }
+
+
   };
 
   const handleInputBlur = (
@@ -171,6 +175,11 @@ function CreateEventCard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!uploadedImageUrl) {
+      alert("Vennligst last opp et bilde før du oppretter arrangementet.");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -328,35 +337,11 @@ function CreateEventCard() {
       />
       <div className="mt-8 flex flex-col items-center">
         <label className="text-xl text-text mb-2">Last opp bilde</label>
-        <div className="flex items-center gap-4">
-          <Input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            id="imageUpload"
-          />
-          <label
-            htmlFor="imageUpload"
-            className="cursor-pointer bg-[#FEFFF4] border border-border rounded-md p-3 flex items-center gap-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-[#96A074]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            <span className="text-text">Velg bilde</span>
-          </label>
-          <p className="text-sm text-text">Ingen fil valgt</p>
-        </div>
+        <ImageUploader 
+          onUploadSuccess={(url) => {
+            setUploadedImageUrl(url);
+            setFormData((prev) => ({ ...prev, imageUrl: url }));
+          }}/>
       </div>
       <div className="flex gap-4 my-10">
         <Button
