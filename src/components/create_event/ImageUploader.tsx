@@ -1,4 +1,3 @@
-// components/avatar-uploader.tsx
 "use client";
 
 import { CldUploadWidget } from "next-cloudinary";
@@ -6,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 interface ImageUploaderProps {
-  onUploadSuccess: (url: string) => void;
+  onUploadSuccess: (url: string, publicId: string) => void;
   onDeleteSuccess?: () => void;
 }
 
@@ -55,7 +54,7 @@ export function ImageUploader({ onUploadSuccess, onDeleteSuccess }: ImageUploade
 
           setUploadedImageUrl(imageUrl);
           setPublicId(publicId);
-          onUploadSuccess(result.info.secure_url);
+          onUploadSuccess(imageUrl, publicId);
           setUploadConfirmed(true);
         }
       }}

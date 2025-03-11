@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ImageUploader } from "./ImageUploader";
+import { CloseButton } from "./CloseButton";
 
 function CreateEventCard() {
   const router = useRouter();
@@ -16,6 +17,7 @@ function CreateEventCard() {
   const [pastDateWarning, setPastDateWarning] = useState(false);
   const [noEndTime, setNoEndTime] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>("");
+  const [publicId, setPublicId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -29,6 +31,29 @@ function CreateEventCard() {
     createdBy: "", // TODO: Legg til createdBy fra bruker som er logget inn
     invitedUsers: [],
   });
+
+  const handleDeleteImage = async () => {
+    if (publicId) {
+      try {
+        const response = await fetch('/api/delete-cloudinary-image', {
+          method: 'POST',
+          body: JSON.stringify({ publicId }),
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await response.json();
+        if (data.success) {
+          setUploadedImageUrl(null);
+          setPublicId(null);
+          setFormData((prev) => ({ ...prev, imageUrl: "" }));
+        } else {
+          alert("Error deleting image from Cloudinary.");
+        }
+      } catch (error) {
+        console.error("Error deleting image:", error);
+        alert("Error deleting image.");
+      }
+    }
+  };
 
   // Finner dagens dato i format YYYY-MM-DD
   const today = new Date().toISOString().split("T")[0];
@@ -200,6 +225,8 @@ function CreateEventCard() {
   };
 
   return (
+    <div>
+    <CloseButton onClick={handleDeleteImage}/>
     <form className="flex flex-col items-center" onSubmit={handleSubmit}>
       <Input
         type="text"
@@ -338,12 +365,14 @@ function CreateEventCard() {
       <div className="mt-8 flex flex-col items-center">
         <label className="text-xl text-text mb-2">{uploadedImageUrl ? "Opplastet bilde:" : "Last opp bilde"}</label>
         <ImageUploader 
-          onUploadSuccess={(url) => {
+          onUploadSuccess={(url, publicId) => {
             setUploadedImageUrl(url);
+            setPublicId(publicId);
             setFormData((prev) => ({ ...prev, imageUrl: url }));
           }}
           onDeleteSuccess={() => {
             setUploadedImageUrl(null); 
+            setPublicId(null);
             setFormData((prev) => ({ ...prev, imageUrl: "" })); 
           }}/>
       </div>
@@ -358,6 +387,7 @@ function CreateEventCard() {
         </Button>
       </div>
     </form>
+    </div>
   );
 }
 
