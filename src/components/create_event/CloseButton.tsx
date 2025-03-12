@@ -1,15 +1,16 @@
 import Link from "next/link";
+import { Button } from "../ui/button";
 
 function CloseButton() {
   return (
-    <div className="flex justify-end">
-      <Link
-        href="/home"
-        className="bg-[#E34E4E] w-24 p-1 text-white text-center rounded-lg border-[#c03737] border-2 mt-5 mr-5"
-      >
+    <Link
+      href="/home"
+      className="flex justify-end"
+    >
+      <Button className="hover:bg-slate-500 text-lg font-semibold hover:scale-105 w-52" variant={ "destructive" }>
         Avbryt
-      </Link>
-    </div>
+      </Button>
+    </Link>
   );
 }
 
