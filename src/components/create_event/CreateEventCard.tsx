@@ -1,375 +1,264 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "../ui/button";
-import { useState } from "react";
-import { createEvent } from "@/lib/firebase/DatabaseFunksjoner";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { firebaseDb } from "@/lib/firebase/config";
+import { createEvent } from "@/lib/firebase/DatabaseFunksjoner";
+import { useUserSession } from "@/hooks/useUserSession";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import type { User } from "@/types";
+import { CloseButton } from "@/components/create_event/CloseButton";
 
-function CreateEventCard() {
+const eventSchema = z.object({
+  title: z.string().min(3, "Tittel må være minst 3 tegn").max(100),
+  description: z.string().min(5, "Beskrivelse må være minst 5 tegn"),
+  location: z.string().min(3, "Sted må være minst 3 tegn"),
+  eventDate: z.string().min(1, "Dato er påkrevd"),
+  startTime: z.string().min(1, "Starttid er påkrevd"),
+  endTime: z.string().optional(),
+  endDate: z.string().optional(),
+  visibility: z.enum(["public", "private"]),
+  imageUrl: z.string().optional(),
+});
+
+type EventFormValues = z.infer<typeof eventSchema>;
+
+export default function CreateEventForm() {
+  const userSession = useUserSession(null);
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [dateError, setDateError] = useState(false);
-  const [pastDateWarning, setPastDateWarning] = useState(false);
-  const [noEndTime, setNoEndTime] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    location: "",
-    eventDate: "",
-    endDate: "",
-    startTime: "",
-    endTime: "",
-    imageUrl: "", // TODO: Legg til imageUrl
-    visibility: "public" as "public" | "private",
-    createdBy: "", // TODO: Legg til createdBy fra bruker som er logget inn
-    invitedUsers: [],
+  const today = new Date().toISOString().split("T")[0];
+  const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [userSuggestions, setUserSuggestions] = useState<User[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+
+  const form = useForm<EventFormValues>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      location: "",
+      eventDate: "",
+      startTime: "",
+      endTime: "",
+      endDate: "",
+      visibility: "public",
+      imageUrl: "",
+    },
   });
 
-  // Finner dagens dato i format YYYY-MM-DD
-  const today = new Date().toISOString().split("T")[0];
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Check for past dates
-    if (name === "eventDate") {
-      const selectedDate = new Date(value);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Set to beginning of day for comparison
-
-      setPastDateWarning(selectedDate < today);
-    }
-
-    // Check validation when changing date or time fields
-    if (
-      name === "eventDate" ||
-      name === "endDate" ||
-      name === "startTime" ||
-      name === "endTime"
-    ) {
-      validateDateTime(
-        name === "eventDate" ? value : formData.eventDate,
-        name === "endDate" ? value : formData.endDate,
-        name === "startTime" ? value : formData.startTime,
-        name === "endTime" ? value : formData.endTime
-      );
-    }
-  };
-
-  const handleInputBlur = (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-
-    // Kun oppdater endDate når eventDate-feltet mister fokus
-    if (name === "eventDate" && value) {
-      // Sjekk om det er en gyldig dato
-      const date = new Date(value);
-      if (!isNaN(date.getTime())) {
-        // Sett endDate til samme verdi som eventDate hvis endDate er tom
-        setFormData((prev) => ({
-          ...prev,
-          endDate: prev.endDate ? prev.endDate : value,
-        }));
-      }
-    }
-  };
-
-  const handleNoEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { checked } = e.target;
-    setNoEndTime(checked);
-
-    if (checked) {
-      // If "No end time" is selected, clear end date and time
-      setFormData((prev) => ({
-        ...prev,
-        endDate: "",
-        endTime: "",
-      }));
-      // Clear any validation errors
-      setDateError(false);
-    } else if (formData.eventDate) {
-      // If unchecked and we have a start date, set end date to match start date
-      setFormData((prev) => ({
-        ...prev,
-        endDate: prev.eventDate,
-      }));
-    }
-  };
-
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    // If setting end time but no end date is set, use the start date
-    if (name === "endTime" && !formData.endDate && formData.eventDate) {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-        endDate: prev.eventDate,
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-
-    // Run validation
-    validateDateTime(
-      formData.eventDate,
-      name === "endDate" ? value : formData.endDate,
-      name === "startTime" ? value : formData.startTime,
-      name === "endTime" ? value : formData.endTime
-    );
-  };
-
-  const validateDateTime = (
-    startDate: string,
-    endDate: string,
-    startTime: string,
-    endTime: string
-  ) => {
-    // Skip validation if "No end time" is selected
-    if (noEndTime) {
-      setDateError(false);
-      return;
-    }
-
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-
-      // Check if dates are different
-      if (end < start) {
-        setDateError(true);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (userSearch.length < 2) {
+        setUserSuggestions([]);
         return;
       }
 
-      // If same date, check times
-      if (startDate === endDate && startTime && endTime) {
-        if (endTime < startTime) {
-          setDateError(true);
-          return;
-        }
+      try {
+        const usersCollection = collection(firebaseDb, "users");
+        const userQuery = query(usersCollection, where("email", ">=", userSearch), where("email", "<=", userSearch + "\uf8ff"));
+        const snapshot = await getDocs(userQuery);
+        setUserSuggestions(snapshot.docs.filter(u => u.id !== userSession?.id).map((doc) => ({ id: doc.id, ...doc.data() } as User)));
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, [userSearch]);
+
+  const handleUserSelect = (user: User) => {
+    if (!invitedEmails.includes(user.email)) {
+      setInvitedEmails([...invitedEmails, user.email]);
+    }
+    setUserSearch("");
+    setUserSuggestions([]);
+  };
+
+  const handleRemoveInvite = (email: string) => {
+    setInvitedEmails(invitedEmails.filter((e) => e !== email));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  async function onSubmit(data: EventFormValues) {
+    try {
+      let imageUrl = "";
+      if (imageFile) {
+        // må legge til logikk for å lase opp bild her
+        imageUrl = URL.createObjectURL(imageFile);
       }
 
-      // No errors
-      setDateError(false);
-    }
-  };
+      const newEventId = await createEvent(
+        {
+          ...data,
+          imageUrl,
+          endTime: data.endTime || "",
+          endDate: data.endDate || "",
+          createdAt: new Date().toISOString(),
+        },
+        invitedEmails,
+        userSession?.id || ""
+      );
 
-  const handleVisibilityChange = (checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      visibility: checked ? "private" : "public",
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      setIsSubmitting(true);
-
-      // Pass the formData with current endDate/endTime values
-      // They will be empty if noEndTime is true
-      const newEventId = await createEvent({
-        ...formData,
-        createdAt: new Date().toISOString(),
-      });
-
+      toast.success("Arrangement opprettet!", { description: `Event: ${data.title}` });
       router.push(`/event_page?id=${newEventId}&fromCreate=true`);
     } catch (error) {
-      console.error("Error creating event:", error);
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Feil ved opprettelse av arrangement.");
+      console.error("Feil ved opprettelse av arrangement:", error);
     }
-  };
+  }
 
   return (
-    <form className="flex flex-col items-center" onSubmit={handleSubmit}>
-      <Input
-        type="text"
-        name="title"
-        placeholder="Tittel"
-        value={formData.title}
-        onChange={handleInputChange}
-        className="h-20 w-1/3 text-center border-border
-                     text-4xl text-text"
-        required
-      />
+    <div className="flex flex-col gap-2 max-w-2xl w-full">
+      <CloseButton />
+      <Form { ...form }>
+        <form onSubmit={ form.handleSubmit(onSubmit) } className="flex flex-col justify-center items-center space-y-4 bg-card border rounded-lg p-3">
+          <FormItem className="w-full">
+            <FormLabel className="text-base">Last opp bilde</FormLabel>
+            <FormControl>
+              <Input type="file" accept="image/*" onChange={ handleImageUpload } />
+            </FormControl>
+          </FormItem>
+          { imagePreview && <img src={ imagePreview } alt="Preview" className="w-72 h-60 mt-2 rounded-lg" /> }
 
-      {/* Visibility toggle switch */}
-      <div className="flex items-center justify-center gap-4 mt-4 w-full">
-        <Switch
-          id="event-visibility"
-          checked={formData.visibility === "private"}
-          onCheckedChange={handleVisibilityChange}
-          className="data-[state=checked]:bg-red-500 scale-125"
-        />
-        <Label htmlFor="event-visibility" className="text-text text-lg">
-          {formData.visibility === "public" ? "Offentlig" : "Privat"}{" "}
-          arrangement
-        </Label>
-      </div>
+          <div className="flex flex-col w-full gap-y-5">
+            <FormField control={ form.control } name="title" render={ ({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base">Tittel</FormLabel>
+                <FormControl><Input placeholder="Skriv inn tittel" { ...field } /></FormControl>
+                <FormMessage />
+              </FormItem>
+            ) } />
 
-      <div className="flex flex-row gap-x-20 mt-8">
-        <label className="flex flex-col text-xl text-text">
-          <div className="flex flex-col gap-y-4">
-            <div className="flex flex-col gap-y-1">
-              <span className="font-medium">Fra:</span>
-              <div className="flex gap-x-2">
-                <Input
-                  type="date"
-                  name="eventDate"
-                  placeholder="Start dato"
-                  value={formData.eventDate}
-                  onChange={handleInputChange}
-                  onBlur={handleInputBlur}
-                  className={`h-10 text-center text-xl rounded-md ${
-                    pastDateWarning ? "border-red-500 border-2" : ""
-                  }`}
-                  required
-                />
-                <Input
-                  type="time"
-                  name="startTime"
-                  value={formData.startTime}
-                  onChange={handleInputChange}
-                  className="h-10 text-center text-xl rounded-md"
-                  required
-                />
-              </div>
-              {pastDateWarning && (
-                <span className="text-red-500 text-sm mt-1">
-                  OBS: Du har valgt en dato som allerede har vært.
-                </span>
-              )}
+            <FormField control={ form.control } name="description" render={ ({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base">Beskrivelse</FormLabel>
+                <FormControl><Textarea placeholder="Skriv en beskrivelse" { ...field } /></FormControl>
+                <FormMessage />
+              </FormItem>
+            ) } />
+
+            <FormField control={ form.control } name="location" render={ ({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base">Sted</FormLabel>
+                <FormControl><Input placeholder="Skriv inn sted" { ...field } /></FormControl>
+                <FormMessage />
+              </FormItem>
+            ) } />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={ form.control } name="eventDate" render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">Startdato</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      min={ today }
+                      value={ field.value }
+                      onChange={ (e) => {
+                        field.onChange(e.target.value);
+                        form.setValue("endDate", "");
+                      } }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) } />
+
+              <FormField control={ form.control } name="startTime" render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">Starttid</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="time"
+                      min={ form.watch("eventDate") === today ? new Date().toISOString().slice(11, 16) : undefined }
+                      value={ field.value }
+                      onChange={ (e) => {
+                        field.onChange(e.target.value);
+                        form.setValue("endTime", "");
+                      } }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) } />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={ form.control } name="endDate" render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">Sluttdato</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      min={ form.watch("eventDate") || today }
+                      value={ field.value }
+                      onChange={ (e) => field.onChange(e.target.value) }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) } />
+
+              <FormField control={ form.control } name="endTime" render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">Sluttid</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="time"
+                      min={ form.watch("endDate") === form.watch("eventDate") ? form.watch("startTime") : undefined } // End time must be after start time if same day
+                      value={ field.value }
+                      onChange={ (e) => field.onChange(e.target.value) }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) } />
             </div>
 
-            {/* No end time checkbox */}
-            <div className="flex items-center gap-2 mt-1">
-              <input
-                type="checkbox"
-                id="noEndTime"
-                checked={noEndTime}
-                onChange={handleNoEndTimeChange}
-                className="h-4 w-4"
-              />
-              <label htmlFor="noEndTime" className="text-sm font-medium">
-                Ingen sluttid
-              </label>
-            </div>
+            <FormItem>
+              <FormLabel className="text-base">Inviter brukere</FormLabel>
+              <FormControl>
+                <Input placeholder="Søk etter e-post..." value={ userSearch } onChange={ (e) => setUserSearch(e.target.value) } />
+              </FormControl>
+            </FormItem>
+            <div className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-1 max-h-44 overflow-auto ">
+                { userSuggestions.map((user) => (
+                  <Button key={ user.id } variant={ "ghost" } type="button" className="max-w-fit hover:scale-100" onClick={ () => handleUserSelect(user) }>{ `${user.firstName}: ${user.email}` }</Button>
+                )) }
+              </ul>
 
-            {!noEndTime && (
-              <div className="flex flex-col gap-y-1">
-                <span className="font-medium">Til:</span>
-                <div className="flex gap-x-2">
-                  <Input
-                    type="date"
-                    name="endDate"
-                    placeholder="Slutt dato"
-                    min={formData.eventDate || today}
-                    value={formData.endDate}
-                    onChange={handleInputChange}
-                    className={`h-10 text-center text-xl rounded-md ${
-                      dateError ? "border-red-500 border-2" : ""
-                    }`}
-                    required={!noEndTime}
-                  />
-                  <Input
-                    type="time"
-                    name="endTime"
-                    value={formData.endTime}
-                    onChange={handleTimeChange}
-                    className={`h-10 text-center text-xl rounded-md ${
-                      dateError && formData.eventDate === formData.endDate
-                        ? "border-red-500 border-2"
-                        : ""
-                    }`}
-                    required={!noEndTime}
-                  />
-                </div>
-                {dateError && (
-                  <span className="text-red-500 text-sm mt-1">
-                    {formData.eventDate === formData.endDate
-                      ? "Slutt klokkeslett kan ikke være før start klokkeslett"
-                      : "Slutt dato kan ikke være før start dato"}
-                  </span>
-                )}
+              <p className="text-base font-medium">Inviterte brukere: </p>
+              <div className="flex flex-row">
+                { invitedEmails.map((email) => (
+                  <Badge key={ email } className="mr-2 max-w-fit p-1 px-2 hover:bg-slate-950">
+                    { email } <span className="cursor-pointer ml-1" onClick={ () => handleRemoveInvite(email) }>✕</span>
+                  </Badge>
+                )) }
               </div>
-            )}
+            </div>
           </div>
-        </label>
-        <label className="flex flex-col text-xl text-text">
-          Hvor?
-          <Input
-            type="text"
-            name="location"
-            placeholder="Sted"
-            value={formData.location}
-            onChange={handleInputChange}
-            className="h-10 text-center text-xl rounded-md"
-            required
-          />
-        </label>
-      </div>
-      <textarea
-        name="description"
-        placeholder="Besrivelse"
-        value={formData.description}
-        onChange={handleInputChange}
-        className="h-80 w-1/2 mt-10 placeholder-placeholder text-xl pl-4 pt-4 border border-border rounded-md"
-        required
-      />
-      <div className="mt-8 flex flex-col items-center">
-        <label className="text-xl text-text mb-2">Last opp bilde</label>
-        <div className="flex items-center gap-4">
-          <Input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            id="imageUpload"
-          />
-          <label
-            htmlFor="imageUpload"
-            className="cursor-pointer bg-[#FEFFF4] border border-border rounded-md p-3 flex items-center gap-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-[#96A074]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            <span className="text-text">Velg bilde</span>
-          </label>
-          <p className="text-sm text-text">Ingen fil valgt</p>
-        </div>
-      </div>
-      <div className="flex gap-4 my-10">
-        <Button
-          type="submit"
-          variant={"outline"}
-          className="py-6 rounded-lg text-white"
-          disabled={isSubmitting || dateError || pastDateWarning}
-        >
-          {isSubmitting ? "Oppretter..." : "Opprett arrangement"}
-        </Button>
-      </div>
-    </form>
+          <Button variant={ "default" } type="submit" className="w-full hover:scale-100 text-lg font-semibold">Opprett arrangement</Button>
+        </form>
+      </Form>
+    </div>
   );
 }
-
-export { CreateEventCard };
