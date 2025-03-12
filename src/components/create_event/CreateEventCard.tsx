@@ -19,6 +19,9 @@ import type { User } from "@/types"
 import { CloseButton } from "@/components/create_event/CloseButton"
 import { ImageUploader } from "./ImageUploader"
 
+const defaultImageUrl =
+  "https://res.cloudinary.com/dxeluefou/image/upload/c_fill,g_auto,h_250,w_970/b_rgb:000000,e_gradient_fade,y_-0.50/c_scale,co_rgb:ffffff,fl_relative,l_text:montserrat_25_style_light_align_center:Shop%20Now,w_0.5,y_0.18/v1741776117/defaultEventImage_edhjbz.png"
+
 const eventSchema = z.object({
   title: z.string().min(3, "Tittel må være minst 3 tegn").max(100),
   description: z.string().min(5, "Beskrivelse må være minst 5 tegn"),
@@ -120,16 +123,11 @@ export default function CreateEventCard() {
   }
 
   async function onSubmit(data: EventFormValues) {
-    if (!uploadedImageUrl) {
-      toast.error("Vennligst last opp et bilde før du oppretter arrangementet.")
-      return
-    }
-
     try {
       const newEventId = await createEvent(
         {
           ...data,
-          imageUrl: uploadedImageUrl,
+          imageUrl: uploadedImageUrl || defaultImageUrl,
           endTime: data.endTime || "",
           endDate: data.endDate || "",
           createdAt: new Date().toISOString(),
@@ -148,15 +146,16 @@ export default function CreateEventCard() {
 
   return (
     <div className="flex flex-col gap-2 max-w-2xl w-full">
-      <CloseButton onClick={handleDeleteImage} />
+      <CloseButton onClick={handleDeleteImage} publicId={publicId} />
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col justify-center items-center space-y-4 bg-card border rounded-lg p-3"
         >
-          <div className="w-full">
+          <div className="w-full items-center flex flex-col">
             <FormLabel className="text-base">Last opp bilde</FormLabel>
             <ImageUploader
+              isOptional={true}
               onUploadSuccess={(url, id) => {
                 setUploadedImageUrl(url)
                 setPublicId(id)
