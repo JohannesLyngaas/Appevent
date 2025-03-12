@@ -74,6 +74,9 @@ export default function ParticipatingEventsTable({ searchTerm }: { searchTerm: s
                 <TableHead>Navn</TableHead>
                 <TableHead>Sted</TableHead>
                 <TableHead>Dato</TableHead>
+                <TableHead>Start Tid</TableHead>
+                <TableHead>Slutt Dato</TableHead>
+                <TableHead>Slutt tid</TableHead>
                 <TableHead className="text-right">Handling</TableHead>
               </TableRow>
             </TableHeader>
@@ -87,6 +90,15 @@ export default function ParticipatingEventsTable({ searchTerm }: { searchTerm: s
                   </TableCell>
                   <TableCell>{ event.location }</TableCell>
                   <TableCell>{ formatTimestamp(event.eventDate, "fullDate") }</TableCell>
+                  <TableCell>
+                    { formatTimestamp(`${event.eventDate} ${event.startTime}`, "time") }
+                  </TableCell>
+                  <TableCell>
+                    { formatTimestamp(`${event.endDate}`, "fullDate") }
+                  </TableCell>
+                  <TableCell>
+                    { formatTimestamp(`${event.endDate} ${event.endTime}`, "time") }
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button variant="destructive" onClick={ () => handleLeaveEvent(event.id) }>Meld av</Button>
                   </TableCell>
