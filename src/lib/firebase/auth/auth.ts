@@ -5,11 +5,14 @@ import {
   onAuthStateChanged as _onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  getAuth,
 } from 'firebase/auth';
 import { generateFirebaseAuthErrorMessage } from '@/utils/errorHandler';
 import { firebaseDb, firebaseAuth } from "@/lib/firebase/config"
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { FirebaseError } from 'firebase/app';
+import { User as UserType } from "@/types/index";
+import { redirect } from 'next/dist/server/api-utils';
 
 {/*
   det her tulelt er en funksjon som bruker for å sjekke når bruker
@@ -17,6 +20,15 @@ import { FirebaseError } from 'firebase/app';
   basert på det. Kalt en callback function */}
 export function onAuthStateChanged(callback: (authUser: User | null) => void) {
   return _onAuthStateChanged(firebaseAuth, callback);
+};
+
+export function getCurrentUserID() {
+    const user = getAuth().currentUser;
+    if (user) {
+      return user.uid;
+    } else {
+      return null;
+    }
 };
 
 {/* De to funksjonene under gjør det mulig for folk å logge inn med
@@ -35,11 +47,14 @@ export async function signInWithGoogle() {
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
+        const firstLastName = user.displayName?.split(" ") ?? "empty";
         await setDoc(userRef, {
+          id: user.uid,
           email: user.email,
           userName: user.displayName,
-          firstName: "empty",
-          lastName: "empty",
+          imageUrl: (user.photoURL !== null) ? user.photoURL : "https://res.cloudinary.com/dxeluefou/image/upload/v1741530127/defaultProfilePic_lixzoy.jpg",
+          firstName: firstLastName[0],
+          lastName: firstLastName[firstLastName.length - 1],
           createdAt: new Date(),
           banned: false,
           role: "user"
@@ -70,19 +85,21 @@ export async function registerWithEmail(
   firstName: string,
   lastName: string,
   email: string,
-  password: string
+  password: string,
 ) {
   try {
     const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
     const user = userCredential.user;
     const userRef = doc(firebaseDb, "users", user.uid);
     await setDoc(userRef, {
+      id: user.uid,
       email,
       firstName,
       lastName,
       userName: `${firstName} ${lastName}`,
       createdAt: new Date(),
       banned: false,
+      imageUrl: "https://res.cloudinary.com/dxeluefou/image/upload/v1741530127/defaultProfilePic_lixzoy.jpg",
       role: "user"
     });
     return user;

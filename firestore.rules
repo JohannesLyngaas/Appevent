@@ -1,7 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     // Brukere
     match /users/{userId} {
       allow read: if true; // Alle kan lese brukerprofiler
@@ -15,7 +14,7 @@ service cloud.firestore {
     // Arrangementer
     match /events/{eventId} {
       allow read: if true; // Alle kan lese arrangementer
-      allow create: if request.auth != null;
+      allow create, write: if request.auth != null;
       allow update, delete: if request.auth != null && (
         resource.data != null && (
           request.auth.uid == resource.data.createdBy ||
@@ -23,17 +22,33 @@ service cloud.firestore {
         )
       );
     }
-
-    // Påmeldte
-    match /event_participants/{docId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow delete: if request.auth != null && (
-        resource.data != null && (
-          request.auth.uid == resource.data.userId ||
-          get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.createdBy == request.auth.uid
-        )
-      );
+    
+    // Inviterte brukere
+    match /events/{eventId} {
+    	match /invitedUsers/{userId} {
+        allow read: if request.auth != null;
+        allow create, write: if request.auth != null;
+        allow update, delete: if request.auth != null && (
+          resource.data != null && (
+           	request.auth.uid == resource.data.userId ||
+          	get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.createdBy == request.auth.uid
+        	)
+        );
+      }
+    }
+    
+    // Påmeldte brukere, regler som a
+    match /events/{eventId} {
+    	match /participants/{userId} {
+        allow read: if request.auth != null;
+        allow create, write: if request.auth != null;
+        allow update, delete: if request.auth != null && (
+          resource.data != null && (
+           	request.auth.uid == resource.data.userId ||
+          	get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.createdBy == request.auth.uid
+        	)
+        );
+      }
     }
 
     // Kommentarer

@@ -129,10 +129,10 @@ export default function UsersTable() {
   const filteredUsers = users.filter(
     (user) =>
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      (user.userName && user.userName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.firstName && user.firstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.lastName && user.lastName.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   if (loading) {
     return <div className="flex justify-center p-8">Henter brukere...</div>
