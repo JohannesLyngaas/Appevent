@@ -1,12 +1,14 @@
 export interface User {
   id: string;
   email: string;
+  imageUrl: string | "https://res.cloudinary.com/dxeluefou/image/upload/v1741530127/defaultProfilePic_lixzoy.jpg";
   userName: string;
   firstName: string;
   lastName: string;
   role: "user" | "admin";
   createdAt: string;
   banned?: boolean;
+  bio: string;
 }
 
 export interface Event {
