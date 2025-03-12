@@ -11,7 +11,7 @@ import Tables from "@/components/profil/Tables"
 export default function Profil() {
   const [activeTab, setActiveTab] = useState("events")
   return (
-    <Card className="flex flex-row mx-16 max-w-6xl gap-5 p-5">
+    <Card className="flex flex-row mx-15 max-w-7xl gap-5 p-5">
       <div className="w-1/4">
         <ProfilePictureCard />
       </div>

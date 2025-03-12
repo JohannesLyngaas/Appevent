@@ -128,6 +128,7 @@ export default function MyEventsTable({ searchTerm }: { searchTerm: string }) {
                 <TableHead>Sted</TableHead>
                 <TableHead>Dato</TableHead>
                 <TableHead>Start Tid</TableHead>
+                <TableHead>Slutt dato</TableHead>
                 <TableHead>Slutt Tid</TableHead>
                 <TableHead>Synlighet</TableHead>
                 <TableHead className="text-right">Handlinger</TableHead>
@@ -146,13 +147,16 @@ export default function MyEventsTable({ searchTerm }: { searchTerm: string }) {
                   </TableCell>
                   <TableCell>{ event.location }</TableCell>
                   <TableCell>
-                    { formatTimestamp(event.eventDate, "fullDate") }
+                    { formatTimestamp(`${event.eventDate}`, "fullDate") }
                   </TableCell>
                   <TableCell>
-                    { formatTimestamp(event.startTime, "time") }
+                    { formatTimestamp(`${event.eventDate} ${event.startTime}`, "time") }
                   </TableCell>
                   <TableCell>
-                    { formatTimestamp(event.endTime, "time") }
+                    { formatTimestamp(`${event.endDate}`, "fullDate") }
+                  </TableCell>
+                  <TableCell>
+                    { formatTimestamp(`${event.endDate} ${event.endTime}`, "time") }
                   </TableCell>
                   <TableCell>
                     <Badge
