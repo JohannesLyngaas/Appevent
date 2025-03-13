@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
 import EventCard from "./EventCard";
@@ -7,6 +7,7 @@ import { useUserSession } from "@/hooks/useUserSession";
 import { getAllEvents } from "@/lib/firebase/DatabaseFunksjoner";
 import { getEventsWhereUserIsInvited, getEventByUser } from "@/lib/firebase/DatabaseFunksjoner";
 import { getCurrentUserID } from "@/lib/firebase/auth/auth";
+import Link from "next/link";
 
 export interface Event {
   id: string;
@@ -37,6 +38,7 @@ export default function AllEvents() {
     handleDeletEvent events i   const [events, setEvents] = useState<Event[]>([])
     for å bestemme hvilken arrangement som skal slettes fra listen.*/
   }
+
   useEffect(() => {
     console.log(userSession);
 
@@ -78,15 +80,18 @@ export default function AllEvents() {
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {events.map((event) => (
-          <EventCard
-            key={event.id}
-            title={event.title}
-            location={event.location}
-            imageUrl={event.imageUrl}
-            date={event.eventDate}
-          />
-        ))}
-      </div>
-  )
+      {events.map((event) => (
+        <Link key={event.id} href={`/event_page?id=${event.id}`} passHref>
+          <div className="cursor-pointer">
+            <EventCard
+              title={event.title}
+              location={event.location}
+              imageUrl={event.imageUrl}
+              date={event.eventDate}
+            />
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
 }
