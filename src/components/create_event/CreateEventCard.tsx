@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import type { User } from "@/types"
 import { CloseButton } from "@/components/create_event/CloseButton"
 import { ImageUploader } from "./ImageUploader"
+import { Switch } from "../ui/switch"
 
 const defaultImageUrl =
   "https://res.cloudinary.com/dxeluefou/image/upload/c_fill,g_auto,h_250,w_970/b_rgb:000000,e_gradient_fade,y_-0.50/c_scale,co_rgb:ffffff,fl_relative,l_text:montserrat_25_style_light_align_center:Shop%20Now,w_0.5,y_0.18/v1741776117/defaultEventImage_edhjbz.png"
@@ -295,8 +296,23 @@ export default function CreateEventCard() {
                   </FormItem>
                 )}
               />
+              <FormField 
+                control={form.control}
+                name="visibility"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-2">
+                    <FormLabel className="text-base">Synlighet: {field.value === "private" ? "Privat" : "Offentlig"}</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value === "private"}
+                        onCheckedChange={(checked) => field.onChange(checked ? "private" : "public")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-
             <FormItem>
               <FormLabel className="text-base">Inviter brukere</FormLabel>
               <FormControl>
