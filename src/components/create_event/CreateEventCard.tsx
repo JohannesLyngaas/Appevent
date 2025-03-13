@@ -78,7 +78,7 @@ export default function CreateEventCard() {
           toast.error("Feil ved sletting av bilde.")
         }
       } catch (error) {
-        console.error("Error deleting image:", error)
+        console.error("Feil ved sletting av bilde:", error)
         toast.error("Feil ved sletting av bilde.")
       }
     }
