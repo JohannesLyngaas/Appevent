@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { firebaseDb } from "@/lib/firebase/config";
-import { collection, getDocs } from "firebase/firestore";
 import EventCard from "./EventCard";
 import { toast } from "sonner";
+import { useUserSession } from "@/hooks/useUserSession";
 import { getAllEvents } from "@/lib/firebase/DatabaseFunksjoner";
+import { getEventsWhereUserIsInvited, getEventByUser } from "@/lib/firebase/DatabaseFunksjoner";
+import { getCurrentUserID } from "@/lib/firebase/auth/auth";
 
 export interface Event {
   id: string;
@@ -24,7 +25,7 @@ export interface Event {
 }
 
 export default function AllEvents() {
-  
+  const userSession = useUserSession(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,10 +38,33 @@ export default function AllEvents() {
     for å bestemme hvilken arrangement som skal slettes fra listen.*/
   }
   useEffect(() => {
+    console.log(userSession);
+
     const fetchEvents = async () => {
+      setLoading(true);
+
       try {
         const eventsData = await getAllEvents();
-        setEvents(eventsData);
+        const publicEvents = eventsData.filter((event: Event) => event.visibility === "public");
+
+        if (!userSession) {
+          setEvents(publicEvents);
+          return;
+        }
+
+        const userId = userSession.id.toString() ?? getCurrentUserID.toString();
+        const userCreatedEvents = await getEventByUser(userId);
+        const invitedEvents = await getEventsWhereUserIsInvited(userId);
+
+        const allEvents = [
+          ...publicEvents,
+          ...invitedEvents,
+          ...userCreatedEvents,
+        ].filter(
+          (event, index, self) => index === self.findIndex((e) => e.id === event.id)
+        );
+
+        setEvents(allEvents);
       } catch (error) {
         console.error("Feil når arrangementer ble hentet:", error);
         toast.error("Kunne ikke hente arrangementer. Prøv igjen senere.");
@@ -50,7 +74,7 @@ export default function AllEvents() {
     };
 
     fetchEvents();
-  }, []);
+  }, [userSession]);
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
