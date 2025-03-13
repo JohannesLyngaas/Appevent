@@ -1,11 +1,10 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
-import { firebaseDb } from "@/lib/firebase/config";
-import { collection, getDocs } from "firebase/firestore";
-import EventCard from "./EventCard";
 import { toast } from "sonner";
 import { getAllEvents } from "@/lib/firebase/DatabaseFunksjoner";
+import Link from "next/link";
+import EventCard from "./EventCard";
 
 export interface Event {
   id: string;
@@ -24,7 +23,6 @@ export interface Event {
 }
 
 export default function AllEvents() {
-  
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +34,7 @@ export default function AllEvents() {
     handleDeletEvent events i   const [events, setEvents] = useState<Event[]>([])
     for å bestemme hvilken arrangement som skal slettes fra listen.*/
   }
+
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -54,15 +53,18 @@ export default function AllEvents() {
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {events.map((event) => (
-          <EventCard
-            key={event.id}
-            title={event.title}
-            location={event.location}
-            imageUrl={event.imageUrl}
-            date={event.eventDate}
-          />
-        ))}
-      </div>
-  )
+      {events.map((event) => (
+        <Link key={event.id} href={`/event_page?id=${event.id}`} passHref>
+          <div className="cursor-pointer">
+            <EventCard
+              title={event.title}
+              location={event.location}
+              imageUrl={event.imageUrl}
+              date={event.eventDate}
+            />
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
 }
