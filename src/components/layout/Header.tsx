@@ -44,7 +44,7 @@ export function Header({ session }: HeaderProps) {
 
         { userSession?.role === "admin" && (
           <Link href="/admin">
-            <Button variant="outline">Admin</Button>
+            <Button variant="default">Admin</Button>
           </Link>
         ) }
         { userSession &&
