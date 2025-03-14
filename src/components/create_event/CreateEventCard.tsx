@@ -1,26 +1,33 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
-import { collection, getDocs, query, where } from "firebase/firestore"
-import { firebaseDb } from "@/lib/firebase/config"
-import { createEvent } from "@/lib/firebase/DatabaseFunksjoner"
-import { useUserSession } from "@/hooks/useUserSession"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import type { User } from "@/types"
-import { CloseButton } from "@/components/create_event/CloseButton"
-import { ImageUploader } from "./ImageUploader"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { firebaseDb } from "@/lib/firebase/config";
+import { createEvent } from "@/lib/firebase/DatabaseFunksjoner";
+import { useUserSession } from "@/hooks/useUserSession";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import type { User } from "@/types";
+import { CloseButton } from "@/components/create_event/CloseButton";
+import { ImageUploader } from "./ImageUploader";
 
 const defaultImageUrl =
-  "https://res.cloudinary.com/dxeluefou/image/upload/c_fill,g_auto,h_250,w_970/b_rgb:000000,e_gradient_fade,y_-0.50/c_scale,co_rgb:ffffff,fl_relative,l_text:montserrat_25_style_light_align_center:Shop%20Now,w_0.5,y_0.18/v1741776117/defaultEventImage_edhjbz.png"
+  "https://res.cloudinary.com/dxeluefou/image/upload/c_fill,g_auto,h_250,w_970/b_rgb:000000,e_gradient_fade,y_-0.50/c_scale,co_rgb:ffffff,fl_relative,l_text:montserrat_25_style_light_align_center:Shop%20Now,w_0.5,y_0.18/v1741776117/defaultEventImage_edhjbz.png";
 
 const eventSchema = z.object({
   title: z.string().min(3, "Tittel må være minst 3 tegn").max(100),
@@ -32,19 +39,19 @@ const eventSchema = z.object({
   endDate: z.string().optional(),
   visibility: z.enum(["public", "private"]),
   imageUrl: z.string().optional(),
-})
+});
 
-type EventFormValues = z.infer<typeof eventSchema>
+type EventFormValues = z.infer<typeof eventSchema>;
 
 export default function CreateEventCard() {
-  const userSession = useUserSession(null)
-  const router = useRouter()
-  const today = new Date().toISOString().split("T")[0]
-  const [invitedEmails, setInvitedEmails] = useState<string[]>([])
-  const [userSearch, setUserSearch] = useState("")
-  const [userSuggestions, setUserSuggestions] = useState<User[]>([])
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
-  const [publicId, setPublicId] = useState<string | null>(null)
+  const userSession = useUserSession(null);
+  const router = useRouter();
+  const today = new Date().toISOString().split("T")[0];
+  const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [userSuggestions, setUserSuggestions] = useState<User[]>([]);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [publicId, setPublicId] = useState<string | null>(null);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
@@ -59,7 +66,7 @@ export default function CreateEventCard() {
       visibility: "public",
       imageUrl: "",
     },
-  })
+  });
 
   const handleDeleteImage = async () => {
     if (publicId) {
@@ -68,59 +75,61 @@ export default function CreateEventCard() {
           method: "POST",
           body: JSON.stringify({ publicId }),
           headers: { "Content-Type": "application/json" },
-        })
-        const data = await response.json()
+        });
+        const data = await response.json();
         if (data.success) {
-          setUploadedImageUrl(null)
-          setPublicId(null)
-          form.setValue("imageUrl", "")
+          setUploadedImageUrl(null);
+          setPublicId(null);
+          form.setValue("imageUrl", "");
         } else {
-          toast.error("Feil ved sletting av bilde.")
+          toast.error("Feil ved sletting av bilde.");
         }
       } catch (error) {
-        console.error("Error deleting image:", error)
-        toast.error("Feil ved sletting av bilde.")
+        console.error("Error deleting image:", error);
+        toast.error("Feil ved sletting av bilde.");
       }
     }
-  }
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
       if (userSearch.length < 2) {
-        setUserSuggestions([])
-        return
+        setUserSuggestions([]);
+        return;
       }
 
       try {
-        const usersCollection = collection(firebaseDb, "users")
+        const usersCollection = collection(firebaseDb, "users");
         const userQuery = query(
           usersCollection,
           where("email", ">=", userSearch),
-          where("email", "<=", userSearch + "\uf8ff"),
-        )
-        const snapshot = await getDocs(userQuery)
+          where("email", "<=", userSearch + "\uf8ff")
+        );
+        const snapshot = await getDocs(userQuery);
         setUserSuggestions(
-          snapshot.docs.filter((u) => u.id !== userSession?.id).map((doc) => ({ id: doc.id, ...doc.data() }) as User),
-        )
+          snapshot.docs
+            .filter((u) => u.id !== userSession?.id)
+            .map((doc) => ({ id: doc.id, ...doc.data() } as User))
+        );
       } catch (error) {
-        console.error("Error fetching users:", error)
+        console.error("Error fetching users:", error);
       }
-    }
+    };
 
-    fetchUsers()
-  }, [userSearch, userSession?.id])
+    fetchUsers();
+  }, [userSearch, userSession?.id]);
 
   const handleUserSelect = (user: User) => {
     if (!invitedEmails.includes(user.email)) {
-      setInvitedEmails([...invitedEmails, user.email])
+      setInvitedEmails([...invitedEmails, user.email]);
     }
-    setUserSearch("")
-    setUserSuggestions([])
-  }
+    setUserSearch("");
+    setUserSuggestions([]);
+  };
 
   const handleRemoveInvite = (email: string) => {
-    setInvitedEmails(invitedEmails.filter((e) => e !== email))
-  }
+    setInvitedEmails(invitedEmails.filter((e) => e !== email));
+  };
 
   async function onSubmit(data: EventFormValues) {
     try {
@@ -133,14 +142,16 @@ export default function CreateEventCard() {
           createdAt: new Date().toISOString(),
         },
         invitedEmails,
-        userSession?.id || "",
-      )
+        userSession?.id || ""
+      );
 
-      toast.success("Arrangement opprettet!", { description: `Event: ${data.title}` })
-      router.push(`/event_page?id=${newEventId}&fromCreate=true`)
+      toast.success("Arrangement opprettet!", {
+        description: `Event: ${data.title}`,
+      });
+      router.push(`/event_page?id=${newEventId}&fromCreate=true`);
     } catch (error) {
-      toast.error("Feil ved opprettelse av arrangement.")
-      console.error("Feil ved opprettelse av arrangement:", error)
+      toast.error("Feil ved opprettelse av arrangement.");
+      console.error("Feil ved opprettelse av arrangement:", error);
     }
   }
 
@@ -157,14 +168,14 @@ export default function CreateEventCard() {
             <ImageUploader
               isOptional={true}
               onUploadSuccess={(url, id) => {
-                setUploadedImageUrl(url)
-                setPublicId(id)
-                form.setValue("imageUrl", url)
+                setUploadedImageUrl(url);
+                setPublicId(id);
+                form.setValue("imageUrl", url);
               }}
               onDeleteSuccess={() => {
-                setUploadedImageUrl(null)
-                setPublicId(null)
-                form.setValue("imageUrl", "")
+                setUploadedImageUrl(null);
+                setPublicId(null);
+                form.setValue("imageUrl", "");
               }}
             />
           </div>
@@ -225,8 +236,8 @@ export default function CreateEventCard() {
                         min={today}
                         value={field.value}
                         onChange={(e) => {
-                          field.onChange(e.target.value)
-                          form.setValue("endDate", "")
+                          field.onChange(e.target.value);
+                          form.setValue("endDate", "");
                         }}
                       />
                     </FormControl>
@@ -244,11 +255,15 @@ export default function CreateEventCard() {
                     <FormControl>
                       <Input
                         type="time"
-                        min={form.watch("eventDate") === today ? new Date().toISOString().slice(11, 16) : undefined}
+                        min={
+                          form.watch("eventDate") === today
+                            ? new Date().toISOString().slice(11, 16)
+                            : undefined
+                        }
                         value={field.value}
                         onChange={(e) => {
-                          field.onChange(e.target.value)
-                          form.setValue("endTime", "")
+                          field.onChange(e.target.value);
+                          form.setValue("endTime", "");
                         }}
                       />
                     </FormControl>
@@ -286,7 +301,11 @@ export default function CreateEventCard() {
                     <FormControl>
                       <Input
                         type="time"
-                        min={form.watch("endDate") === form.watch("eventDate") ? form.watch("startTime") : undefined}
+                        min={
+                          form.watch("endDate") === form.watch("eventDate")
+                            ? form.watch("startTime")
+                            : undefined
+                        }
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
                       />
@@ -323,9 +342,15 @@ export default function CreateEventCard() {
               <p className="text-base font-medium">Inviterte brukere: </p>
               <div className="flex flex-row flex-wrap">
                 {invitedEmails.map((email) => (
-                  <Badge key={email} className="mr-2 mb-2 max-w-fit p-1 px-2 hover:bg-slate-950">
+                  <Badge
+                    key={email}
+                    className="mr-2 mb-2 max-w-fit p-1 px-2 hover:bg-slate-950"
+                  >
                     {email}{" "}
-                    <span className="cursor-pointer ml-1" onClick={() => handleRemoveInvite(email)}>
+                    <span
+                      className="cursor-pointer ml-1"
+                      onClick={() => handleRemoveInvite(email)}
+                    >
                       ✕
                     </span>
                   </Badge>
@@ -333,12 +358,15 @@ export default function CreateEventCard() {
               </div>
             </div>
           </div>
-          <Button variant={"default"} type="submit" className="w-full hover:scale-100 text-lg font-semibold">
+          <Button
+            variant={"default"}
+            type="submit"
+            className="w-full hover:scale-100 text-lg font-semibold"
+          >
             Opprett arrangement
           </Button>
         </form>
       </Form>
     </div>
-  )
+  );
 }
-
