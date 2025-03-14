@@ -147,7 +147,7 @@ export default function EventsTable() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Arrangement håndtering</h2>
+        <h2 className="text-xl font-semibold">Arrangementshåndtering</h2>
         <Input
           placeholder="Søk arrangementer..."
           className="max-w-xs"

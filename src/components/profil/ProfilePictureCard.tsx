@@ -43,7 +43,7 @@ export default function ProfilePictureCard() {
         </div>
         <CardDescription className="~text-xs/sm">
           Endre profilbilde ved å trykke på blyanten i høyre hjørne. <br />
-          Velg deretter et bilde ved å trykke på 'browse'.
+          Velg deretter et bilde ved å trykke på 'Velg Fil'.
         </CardDescription>
       </CardHeader>
       <CardContent>
