@@ -38,6 +38,7 @@ export async function getAllEvents(): Promise<Event[]> {
       description: data.description || "",
       location: data.location || "",
       eventDate: data.eventDate || "",
+      endDate: data.endDate || "",
       startTime: data.startTime || "",
       endTime: data.endTime || "",
       createdBy: data.createdBy || "",
@@ -49,13 +50,21 @@ export async function getAllEvents(): Promise<Event[]> {
   });
 }
 
-export async function getEventsWhereUserIsParticipant(userId: string): Promise<Event[]> {
+export async function getEventsWhereUserIsParticipant(
+  userId: string
+): Promise<Event[]> {
   const eventsCollection = collection(firebaseDb, "events");
   const eventsSnapshot = await getDocs(eventsCollection);
 
   const userEvents = await Promise.all(
     eventsSnapshot.docs.map(async (eventDoc) => {
-      const participantDocRef = doc(firebaseDb, "events", eventDoc.id, "participants", userId);
+      const participantDocRef = doc(
+        firebaseDb,
+        "events",
+        eventDoc.id,
+        "participants",
+        userId
+      );
       const participantDocSnap = await getDoc(participantDocRef);
 
       if (participantDocSnap.exists()) {
@@ -69,13 +78,21 @@ export async function getEventsWhereUserIsParticipant(userId: string): Promise<E
   return userEvents.filter((event) => event !== null) as Event[];
 }
 
-export async function getEventsWhereUserIsInvited(userId: string): Promise<Event[]> {
+export async function getEventsWhereUserIsInvited(
+  userId: string
+): Promise<Event[]> {
   const eventsCollection = collection(firebaseDb, "events");
   const eventsSnapshot = await getDocs(eventsCollection);
 
   const invitedEvents = await Promise.all(
     eventsSnapshot.docs.map(async (eventDoc) => {
-      const invitedUserDocRef = doc(firebaseDb, "events", eventDoc.id, "invitedUsers", userId);
+      const invitedUserDocRef = doc(
+        firebaseDb,
+        "events",
+        eventDoc.id,
+        "invitedUsers",
+        userId
+      );
       const invitedUserDocSnap = await getDoc(invitedUserDocRef);
 
       if (invitedUserDocSnap.exists()) {
@@ -89,9 +106,24 @@ export async function getEventsWhereUserIsInvited(userId: string): Promise<Event
   return invitedEvents.filter((event) => event !== null) as Event[];
 }
 
-export async function joinEvent(userId: string, eventId: string): Promise<void> {
-  const participantsDocRef = doc(firebaseDb, "events", eventId, "participants", userId);
-  const invitedDocRef = doc(firebaseDb, "events", eventId, "invitedUsers", userId);
+export async function joinEvent(
+  userId: string,
+  eventId: string
+): Promise<void> {
+  const participantsDocRef = doc(
+    firebaseDb,
+    "events",
+    eventId,
+    "participants",
+    userId
+  );
+  const invitedDocRef = doc(
+    firebaseDb,
+    "events",
+    eventId,
+    "invitedUsers",
+    userId
+  );
 
   const participantSnap = await getDoc(participantsDocRef);
   if (participantSnap.exists()) return;
@@ -102,8 +134,17 @@ export async function joinEvent(userId: string, eventId: string): Promise<void> 
   await setDoc(participantsDocRef, {});
 }
 
-export async function leaveEvent(userId: string, eventId: string): Promise<void> {
-  const participantsDocRef = doc(firebaseDb, "events", eventId, "participants", userId);
+export async function leaveEvent(
+  userId: string,
+  eventId: string
+): Promise<void> {
+  const participantsDocRef = doc(
+    firebaseDb,
+    "events",
+    eventId,
+    "participants",
+    userId
+  );
 
   try {
     await deleteDoc(participantsDocRef);
@@ -116,13 +157,15 @@ export async function leaveEvent(userId: string, eventId: string): Promise<void>
 
 export async function getEventByUser(userId: string): Promise<Event[]> {
   const eventsCollection = collection(firebaseDb, "events");
-  const myEvents = query(eventsCollection, where("createdBy", "==", userId))
+  const myEvents = query(eventsCollection, where("createdBy", "==", userId));
   const eventSnap = await getDocs(myEvents);
   return eventSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Event));
-};
+}
 
-
-export async function updateUserInfo(userId: string, updatedFields: Partial<User>): Promise<void> {
+export async function updateUserInfo(
+  userId: string,
+  updatedFields: Partial<User>
+): Promise<void> {
   await updateDoc(doc(firebaseDb, "users", userId), updatedFields);
 }
 
@@ -160,8 +203,11 @@ export async function deleteComment(commentId: string): Promise<void> {
 }
 
 /* Funksjoner for å opprette arrangementer */
-export async function createEvent(eventData: Omit<Event, "id" | "createdBy">, invitedEmails: string[], userId: string): Promise<string> {
-
+export async function createEvent(
+  eventData: Omit<Event, "id" | "createdBy">,
+  invitedEmails: string[],
+  userId: string
+): Promise<string> {
   const eventRef = await addDoc(collection(firebaseDb, "events"), {
     ...eventData,
     createdBy: userId,
@@ -170,11 +216,17 @@ export async function createEvent(eventData: Omit<Event, "id" | "createdBy">, in
 
   if (invitedEmails.length > 0) {
     const usersCollection = collection(firebaseDb, "users");
-    const invitedUsersQuery = query(usersCollection, where("email", "in", invitedEmails));
+    const invitedUsersQuery = query(
+      usersCollection,
+      where("email", "in", invitedEmails)
+    );
     const invitedUsersSnapshot = await getDocs(invitedUsersQuery);
 
     const batch = invitedUsersSnapshot.docs.map((userDoc) =>
-      setDoc(doc(firebaseDb, "events", eventRef.id, "invitedUsers", userDoc.id), {})
+      setDoc(
+        doc(firebaseDb, "events", eventRef.id, "invitedUsers", userDoc.id),
+        {}
+      )
     );
 
     await Promise.all(batch);
@@ -222,4 +274,3 @@ export async function updateReportStatus(
 ): Promise<void> {
   await updateDoc(doc(firebaseDb, "reports", reportId), { status });
 }
-
