@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import type { User } from "@/types";
 import { CloseButton } from "@/components/create_event/CloseButton";
 import { ImageUploader } from "./ImageUploader";
@@ -323,7 +324,7 @@ export default function CreateEventCard() {
                     <FormControl>
                       <Switch
                         checked={field.value === "private"}
-                        onCheckedChange={(checked) => field.onChange(checked ? "private" : "public")}
+                        onCheckedChange={(checked: boolean) => field.onChange(checked ? "private" : "public")}
                       />
                     </FormControl>
                     <FormMessage />
