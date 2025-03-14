@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import type { User } from "@/types";
 import { CloseButton } from "@/components/create_event/CloseButton";
 import { ImageUploader } from "./ImageUploader";
+import { Switch } from "@/components/ui/switch";
 
 const defaultImageUrl =
   "https://res.cloudinary.com/dxeluefou/image/upload/c_fill,g_auto,h_250,w_970/b_rgb:000000,e_gradient_fade,y_-0.50/c_scale,co_rgb:ffffff,fl_relative,l_text:montserrat_25_style_light_align_center:Shop%20Now,w_0.5,y_0.18/v1741776117/defaultEventImage_edhjbz.png";
