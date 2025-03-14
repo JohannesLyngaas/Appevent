@@ -140,11 +140,11 @@ export function ProfileForm() {
           name="userName"
           render={ ({ field }) => (
             <FormItem>
-              <FormLabel className="~text-base/lg">userName</FormLabel>
+              <FormLabel className="~text-base/lg">Brukernavn</FormLabel>
               <FormControl>
                 <Input placeholder="Skriv inn brukernavn" { ...field } />
               </FormControl>
-              <FormDescription>Din nåværende brukernavn. Endre brukernavn ved å endre dette feltet.</FormDescription>
+              <FormDescription>Ditt nåværende brukernavn. Endre brukernavn ved å endre dette feltet.</FormDescription>
               <FormMessage />
             </FormItem>
           ) }
@@ -170,7 +170,7 @@ export function ProfileForm() {
             <FormItem>
               <FormLabel className="~text-base/lg">Bio</FormLabel>
               <FormControl>
-                <Textarea placeholder="Fortell oss litt om deg selv." className="resize-none" style={{fontSize: 18}} { ...field } />
+                <Textarea placeholder="Fortell litt om deg selv." className="resize-none" style={{fontSize: 18}} { ...field } />
               </FormControl>
               <FormMessage />
             </FormItem>
