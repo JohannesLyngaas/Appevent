@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 interface AttendanceButtonAlertProps {
   isAttending: boolean;
@@ -17,7 +18,11 @@ interface AttendanceButtonAlertProps {
   onCancel: () => void;
 }
 
-export function AttendanceButtonAlert({ isAttending, onAttend, onCancel }: AttendanceButtonAlertProps) {
+export function AttendanceButtonAlert({
+  isAttending,
+  onAttend,
+  onCancel,
+}: AttendanceButtonAlertProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const handleCancelClick = () => {
@@ -32,23 +37,24 @@ export function AttendanceButtonAlert({ isAttending, onAttend, onCancel }: Atten
   return (
     <>
       {!isAttending ? (
-        <button
-          onClick={onAttend}
-          className="p-3 rounded-lg bg-[#959D5A] text-white"
+        <Button 
+          onClick={onAttend} 
+          className="w-full"
         >
-          Delta på arrangement
-        </button>
+          Meld deg på
+        </Button>
       ) : (
-        <button
-          onClick={handleCancelClick}
-          className="p-3 rounded-lg bg-[#E34E4E] text-white border-[#c03737] border-2"
+        <Button 
+          onClick={handleCancelClick} 
+          variant="destructive" 
+          className="w-full"
         >
           Meld deg av
-        </button>
+        </Button>
       )}
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent className="bg-[#FEFFF4] border-2 border-[#96A074]">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Er du sikker?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -56,12 +62,12 @@ export function AttendanceButtonAlert({ isAttending, onAttend, onCancel }: Atten
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-[#FEFFF4] border-2 border-[#96A074] text-[#96A074]">
+            <AlertDialogCancel>
               Avbryt
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmCancel}
-              className="bg-[#E34E4E] text-white border-[#c03737] border-2"
+              className="bg-destructive text-destructive-foreground"
             >
               Meld deg av
             </AlertDialogAction>
@@ -70,4 +76,4 @@ export function AttendanceButtonAlert({ isAttending, onAttend, onCancel }: Atten
       </AlertDialog>
     </>
   );
-} 
+}

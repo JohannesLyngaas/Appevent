@@ -2,6 +2,7 @@
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
+import { X } from "lucide-react";
 
 export function CloseButton() {
   const router = useRouter();
@@ -19,13 +20,14 @@ export function CloseButton() {
   };
 
   return (
-    <div className="flex justify-end">
+    <div className="flex justify-end mb-4">
       <Button
-        variant="destructive"
-        className="w-24 mt-5 mr-5"
+        variant="outline"
+        size="icon"
         onClick={handleClose}
+        aria-label="Lukk"
       >
-        Lukk
+        <X className="h-4 w-4" />
       </Button>
     </div>
   );
