@@ -314,8 +314,23 @@ export default function CreateEventCard() {
                   </FormItem>
                 )}
               />
+              <FormField 
+                control={form.control}
+                name="visibility"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-2">
+                    <FormLabel className="text-base">Synlighet: {field.value === "private" ? "Privat" : "Offentlig"}</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value === "private"}
+                        onCheckedChange={(checked) => field.onChange(checked ? "private" : "public")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-
             <FormItem>
               <FormLabel className="text-base">Inviter brukere</FormLabel>
               <FormControl>
