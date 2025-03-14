@@ -2,10 +2,16 @@
 import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, Users, Globe, Lock } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { getAllEvents } from "@/lib/firebase/DatabaseFunksjoner";
+import {
+  getAllEvents,
+  getEventParticipantsFromSubcollection,
+  isUserParticipating,
+  getUserById,
+} from "@/lib/firebase/DatabaseFunksjoner";
 import { AttendanceButtonAlert } from "@/components/event_page/AttendanceButtonAlert";
 import { CloseButton } from "@/components/event_page/CloseButton";
-import type { Event } from "@/types";
+import type { Event, EventParticipant, User } from "@/types";
+import { getCurrentUserID } from "@/lib/firebase/auth/auth";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -18,13 +24,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export function EventPageCard() {
+  const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
+  const [participantUsers, setParticipantUsers] = useState<User[]>([]);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [isAttending, setIsAttending] = useState(false);
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  const [organizer, setOrganizer] = useState<User | null>(null);
   const searchParams = useSearchParams();
   const eventId = searchParams.get("id");
+  const [participants, setParticipants] = useState<EventParticipant[]>([]);
+  const [isUserAttending, setIsUserAttending] = useState(false);
+  const [previewParticipantUsers, setPreviewParticipantUsers] = useState<
+    User[]
+  >([]);
 
   useEffect(() => {
     async function fetchEventWithDates() {
@@ -53,6 +75,125 @@ export function EventPageCard() {
     fetchEventWithDates();
   }, [eventId]);
 
+  useEffect(() => {
+    async function checkParticipation() {
+      if (eventId) {
+        try {
+          // Get all participants
+          const eventParticipants = await getEventParticipantsFromSubcollection(
+            eventId
+          );
+          setParticipants(eventParticipants);
+
+          // Check if current user is participating
+          const userId = await getCurrentUserID();
+          if (userId) {
+            const isAttending = await isUserParticipating(userId, eventId);
+            setIsAttending(isAttending);
+          }
+        } catch (error) {
+          console.error("Error checking participation:", error);
+        }
+      }
+    }
+
+    checkParticipation();
+  }, [eventId]);
+
+  useEffect(() => {
+    async function fetchOrganizer() {
+      try {
+        if (event && event.createdBy) {
+          const userData = await getUserById(event.createdBy);
+          setOrganizer(userData);
+        }
+      } catch (error) {
+        console.error("Error fetching organizer data:", error);
+      }
+    }
+
+    fetchOrganizer();
+  }, [event]);
+
+  useEffect(() => {
+    async function fetchParticipantDetails() {
+      if (!showParticipantsDialog || participants.length === 0) return;
+
+      setLoadingParticipants(true);
+      try {
+        const userPromises = participants.map((participant) =>
+          getUserById(participant.userId)
+        );
+
+        const users = await Promise.all(userPromises);
+        // Filter out null values and sort by name
+        const validUsers = users.filter((user) => user !== null) as User[];
+        validUsers.sort((a, b) => {
+          const nameA = getDisplayName(a);
+          const nameB = getDisplayName(b);
+          return nameA.localeCompare(nameB);
+        });
+
+        setParticipantUsers(validUsers);
+      } catch (error) {
+        console.error("Error fetching participant details:", error);
+      } finally {
+        setLoadingParticipants(false);
+      }
+    }
+
+    fetchParticipantDetails();
+  }, [showParticipantsDialog, participants]);
+
+  useEffect(() => {
+    async function fetchPreviewParticipantData() {
+      if (participants.length === 0) return;
+
+      try {
+        // Only fetch data for participants we're showing in the preview
+        const previewParticipants = participants.slice(0, 8);
+        const userPromises = previewParticipants.map((participant) =>
+          getUserById(participant.userId)
+        );
+
+        const users = await Promise.all(userPromises);
+        // Filter out null values
+        const validUsers = users.filter((user) => user !== null) as User[];
+        setPreviewParticipantUsers(validUsers);
+      } catch (error) {
+        console.error("Error fetching participant preview data:", error);
+      }
+    }
+
+    fetchPreviewParticipantData();
+  }, [participants]);
+
+  function getDisplayName(user: User) {
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    } else if (user.firstName) {
+      return user.firstName;
+    } else if (user.userName) {
+      return user.userName;
+    }
+    return user.id;
+  }
+
+  function getUserInitials(user: User) {
+    if (user.firstName && user.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    } else if (user.firstName) {
+      return user.firstName.substring(0, 2).toUpperCase();
+    } else if (user.userName) {
+      return user.userName.substring(0, 2).toUpperCase();
+    }
+    return user.id.substring(0, 2).toUpperCase();
+  }
+
+  const handleViewAllParticipants = () => {
+    setShowParticipantsDialog(true);
+  };
+
   const handleAttend = () => {
     setIsAttending(true);
   };
@@ -70,6 +211,33 @@ export function EventPageCard() {
     };
     return new Date(dateString).toLocaleDateString("no-NO", options);
   };
+
+  // Helper functions for the organizer display - move inside component
+  function getOrganizerDisplayName() {
+    if (organizer) {
+      if (organizer.firstName && organizer.lastName) {
+        return `${organizer.firstName} ${organizer.lastName}`;
+      } else if (organizer.firstName) {
+        return organizer.firstName;
+      } else if (organizer.userName) {
+        return organizer.userName;
+      }
+    }
+    return eventToRender.createdBy;
+  }
+
+  function getOrganizerInitials() {
+    if (organizer) {
+      if (organizer.firstName && organizer.lastName) {
+        return `${organizer.firstName[0]}${organizer.lastName[0]}`.toUpperCase();
+      } else if (organizer.firstName) {
+        return organizer.firstName.substring(0, 2).toUpperCase();
+      } else if (organizer.userName) {
+        return organizer.userName.substring(0, 2).toUpperCase();
+      }
+    }
+    return eventToRender.createdBy.substring(0, 2).toUpperCase();
+  }
 
   if (loading) {
     return (
@@ -199,6 +367,7 @@ export function EventPageCard() {
                 isAttending={isAttending}
                 onAttend={handleAttend}
                 onCancel={handleCancel}
+                eventId={eventToRender.id}
               />
             </CardFooter>
           </Card>
@@ -211,17 +380,18 @@ export function EventPageCard() {
               <div className="flex items-center gap-4">
                 <Avatar className="h-12 w-12">
                   <AvatarImage
-                    src="/placeholder.svg?height=50&width=50"
+                    src={
+                      organizer?.imageUrl ||
+                      "/placeholder.svg?height=50&width=50"
+                    }
                     alt="Arrangør logo"
                   />
-                  <AvatarFallback>
-                    {eventToRender.createdBy.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarFallback>{getOrganizerInitials()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{eventToRender.createdBy}</p>
+                  <p className="font-medium">{getOrganizerDisplayName()}</p>
                   <p className="text-sm text-muted-foreground">
-                    Kontakt: info@event.no
+                    {organizer?.email && `Kontakt: ${organizer.email}`}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Opprettet:{" "}
@@ -278,26 +448,40 @@ export function EventPageCard() {
                 <span>Deltakere</span>
                 <Badge variant="outline" className="ml-2">
                   <Users className="mr-1 h-3 w-3" />
-                  24
+                  {participants.length}
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex -space-x-2">
-                {[...Array(8)].map((_, i) => (
-                  <Avatar key={i} className="border-2 border-background">
+                {previewParticipantUsers.map((user, i) => (
+                  <Avatar key={user.id} className="border-2 border-background">
                     <AvatarImage
-                      src={`/placeholder.svg?height=40&width=40&text=${i + 1}`}
+                      src={
+                        user.imageUrl ||
+                        `/placeholder.svg?height=40&width=40&text=${user.id.substring(
+                          0,
+                          2
+                        )}`
+                      }
+                      alt={getDisplayName(user)}
                     />
-                    <AvatarFallback>{i + 1}</AvatarFallback>
+                    <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
                   </Avatar>
                 ))}
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                  +16
-                </div>
+                {participants.length > 8 && (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
+                    +{participants.length - 8}
+                  </div>
+                )}
               </div>
               <div className="mt-4">
-                <Button variant="outline" size="sm" className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleViewAllParticipants}
+                >
                   <Users className="mr-2 h-4 w-4" />
                   Se alle deltakere
                 </Button>
@@ -306,6 +490,54 @@ export function EventPageCard() {
           </Card>
         </div>
       </div>
+
+      <Dialog
+        open={showParticipantsDialog}
+        onOpenChange={setShowParticipantsDialog}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Alle deltakere</DialogTitle>
+            <DialogDescription>
+              {participants.length}{" "}
+              {participants.length === 1 ? "person" : "personer"} deltar på
+              dette arrangementet
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingParticipants ? (
+            <div className="flex justify-center py-8">Laster deltakere...</div>
+          ) : (
+            <div className="max-h-96 overflow-y-auto">
+              {participantUsers.length === 0 ? (
+                <p className="text-center text-muted-foreground">
+                  Ingen deltakere ennå
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {participantUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted"
+                    >
+                      <Avatar>
+                        <AvatarImage src={user.imageUrl} />
+                        <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{getDisplayName(user)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

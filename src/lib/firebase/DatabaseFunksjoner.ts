@@ -274,3 +274,136 @@ export async function updateReportStatus(
 ): Promise<void> {
   await updateDoc(doc(firebaseDb, "reports", reportId), { status });
 }
+
+export async function registerEventParticipant(
+  userId: string,
+  eventId: string
+): Promise<void> {
+  if (!userId || !eventId) {
+    throw new Error("BrukerID og ArrangementID er påkrevd");
+  }
+
+  try {
+    // Use a subcollection approach
+    const participantsRef = collection(
+      firebaseDb,
+      "events",
+      eventId,
+      "participants"
+    );
+
+    // Check if already registered (adjust query for subcollection)
+    const participantDoc = doc(participantsRef, userId);
+    const docSnap = await getDoc(participantDoc);
+
+    if (docSnap.exists()) {
+      console.log("User already registered for this event");
+      return;
+    }
+
+    // Register using user ID as document ID
+    await setDoc(participantDoc, {
+      userId: userId,
+      status: "going",
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(`User ${userId} registered for event ${eventId}`);
+  } catch (error) {
+    console.error("Error in registerEventParticipant:", error);
+    throw error;
+  }
+}
+
+// Get all participants for a specific event
+export async function getEventParticipantsFromSubcollection(
+  eventId: string
+): Promise<EventParticipant[]> {
+  const participantsRef = collection(
+    firebaseDb,
+    "events",
+    eventId,
+    "participants"
+  );
+  const snapshot = await getDocs(participantsRef);
+
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id, // This will be the userId
+      eventId: eventId,
+      userId: data.userId,
+      status: data.status,
+      timestamp: data.timestamp,
+    } as EventParticipant;
+  });
+}
+
+// Check if a user is participating in an event
+export async function isUserParticipating(
+  userId: string,
+  eventId: string
+): Promise<boolean> {
+  if (!userId || !eventId) return false;
+
+  const participantDocRef = doc(
+    firebaseDb,
+    "events",
+    eventId,
+    "participants",
+    userId
+  );
+  const docSnap = await getDoc(participantDocRef);
+
+  return docSnap.exists();
+}
+
+// Remove a participant from an event
+export async function removeEventParticipant(
+  userId: string,
+  eventId: string
+): Promise<void> {
+  if (!userId || !eventId) {
+    throw new Error("BrukerID og ArrangementID er påkrevd");
+  }
+
+  const participantDocRef = doc(
+    firebaseDb,
+    "events",
+    eventId,
+    "participants",
+    userId
+  );
+  await deleteDoc(participantDocRef);
+
+  console.log(`User ${userId} removed from event ${eventId}`);
+}
+
+// Add this function if it doesn't exist already
+export async function getUserById(userId: string): Promise<User | null> {
+  try {
+    const userDoc = await getDoc(doc(firebaseDb, "users", userId));
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return {
+        id: userDoc.id,
+        email: userData.email || "",
+        imageUrl:
+          userData.imageUrl ||
+          "https://res.cloudinary.com/dxeluefou/image/upload/v1741530127/defaultProfilePic_lixzoy.jpg",
+        userName: userData.userName || "",
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        role: userData.role || "user",
+        createdAt: userData.createdAt || "",
+        banned: userData.banned || false,
+        bio: userData.bio || "",
+      } as User;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return null;
+  }
+}
