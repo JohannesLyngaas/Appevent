@@ -18,9 +18,6 @@ export function AboutCard() {
             andres arrangementer, har <span className="font-semibold">Appevent</span> alt du trenger for å skape minner sammen med andre.
         </p>
         <p>
-          <span className="font-semibold">Appevent</span> er bygd med et open-source-prosjekt og vi vil strive for å gjøre det enklare og mer brukervennlig for alle.
-        </p>
-        <p>
           Har du spørsmål eller andre henvendelser? Ikke nøl med å ta kontakt på{" "}
           <a href="mailto:kontakt@Appevent.no" className="text-primary hover:underline">
             kontakt@Appevent.no
