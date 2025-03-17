@@ -10,6 +10,7 @@ import {
   where,
   addDoc,
   setDoc,
+  orderBy,
 } from "firebase/firestore";
 import type { User, Event, EventParticipant, Comment, Report } from "@/types";
 import { getCurrentUserID } from "./auth/auth";
@@ -192,14 +193,62 @@ export async function getEventParticipants(
 }
 
 export async function getEventComments(eventId: string): Promise<Comment[]> {
-  const commentsCollection = collection(firebaseDb, "comments");
-  const q = query(commentsCollection, where("eventId", "==", eventId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Comment));
+  try {
+    const commentsCollectionRef = collection(firebaseDb, "comments");
+    const q = query(commentsCollectionRef, where("eventId", "==", eventId));
+
+    const snapshot = await getDocs(q);
+    const comments = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        eventId: data.eventId,
+        userId: data.userId,
+        text: data.text,
+        createdAt: data.createdAt,
+      } as Comment;
+    });
+
+    return comments.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  } catch (error) {
+    console.error("Error fetching event comments:", error);
+    throw error;
+  }
+}
+
+export async function addComment(
+  eventId: string,
+  userId: string,
+  text: string
+): Promise<string> {
+  try {
+    const commentsCollectionRef = collection(firebaseDb, "comments");
+    const newComment = {
+      eventId,
+      userId,
+      text,
+      createdAt: new Date().toISOString(),
+    };
+
+    const docRef = await addDoc(commentsCollectionRef, newComment);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    throw error;
+  }
 }
 
 export async function deleteComment(commentId: string): Promise<void> {
-  await deleteDoc(doc(firebaseDb, "comments", commentId));
+  try {
+    const commentRef = doc(firebaseDb, "comments", commentId);
+    await deleteDoc(commentRef);
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    throw error;
+  }
 }
 
 /* Funksjoner for å opprette arrangementer */
@@ -405,5 +454,107 @@ export async function getUserById(userId: string): Promise<User | null> {
   } catch (error) {
     console.error("Error fetching user:", error);
     return null;
+  }
+}
+
+// Rapportere en kommentar
+export async function reportComment(
+  userId: string,
+  commentId: string,
+  reason: string
+): Promise<string> {
+  try {
+    const reportsCollection = collection(firebaseDb, "reports");
+    const reportData = {
+      reportedBy: userId,
+      reportedItem: {
+        type: "comment",
+        id: commentId,
+      },
+      reason: reason,
+      status: "pending",
+      timestamp: new Date().toISOString(),
+    };
+
+    const docRef = await addDoc(reportsCollection, reportData);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error reporting comment:", error);
+    throw error;
+  }
+}
+
+// Hent rapporterte kommentarer
+export async function getReportedComments(): Promise<Report[]> {
+  try {
+    const reportsCollection = collection(firebaseDb, "reports");
+    const q = query(
+      reportsCollection,
+      where("reportedItem.type", "==", "comment")
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as Report)
+    );
+  } catch (error) {
+    console.error("Error fetching reported comments:", error);
+    throw error;
+  }
+}
+
+// Hent full informasjon om rapporterte kommentarer (inkl. kommentarinnhold)
+export async function getReportedCommentDetails(): Promise<
+  Array<Report & { commentData?: Comment; userData?: User }>
+> {
+  try {
+    // Først hent alle rapporter for kommentarer
+    const reports = await getReportedComments();
+
+    // Deretter hent detaljer for hver kommentar og bruker
+    const reportsWithDetails = await Promise.all(
+      reports.map(async (report) => {
+        let commentData: Comment | undefined;
+        let userData: User | undefined;
+
+        try {
+          // Hent kommentaren
+          const commentId = report.reportedItem.id;
+          const commentDoc = await getDoc(
+            doc(firebaseDb, "comments", commentId)
+          );
+
+          if (commentDoc.exists()) {
+            const commentData = {
+              id: commentDoc.id,
+              ...commentDoc.data(),
+            } as Comment;
+
+            // Hent brukeren som skrev kommentaren
+            if (commentData.userId) {
+              const userDoc = await getUserById(commentData.userId);
+              if (userDoc) {
+                userData = userDoc;
+              }
+            }
+
+            return { ...report, commentData, userData };
+          }
+        } catch (error) {
+          console.error(
+            `Error fetching details for report ${report.id}:`,
+            error
+          );
+        }
+
+        // Returner rapporten selv om vi ikke fant kommentaren (kan ha blitt slettet)
+        return { ...report, commentData, userData };
+      })
+    );
+
+    return reportsWithDetails;
+  } catch (error) {
+    console.error("Error fetching reported comment details:", error);
+    throw error;
   }
 }

@@ -31,6 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EventComments } from "@/components/event_page/EventComments";
 
 export function EventPageCard() {
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
@@ -538,6 +539,10 @@ export function EventPageCard() {
           )}
         </DialogContent>
       </Dialog>
+
+      <CardContent className="pt-6">
+        <EventComments eventId={eventId || ""} eventOwnerId={eventToRender.createdBy} />
+      </CardContent>
     </div>
   );
 }
