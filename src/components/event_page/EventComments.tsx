@@ -47,10 +47,20 @@ export function EventComments({ eventId, eventOwnerId }: EventCommentsProps) {
   const [reportReason, setReportReason] = useState("");
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
+  const [visibleComments, setVisibleComments] = useState<Comment[]>([]);
+  const [displayCount, setDisplayCount] = useState(4);
   
   // Sjekk om innlogget bruker er eier av arrangementet eller admin
   const isEventOwner = userSession?.id === eventOwnerId;
   const isAdmin = userSession?.role === "admin";
+
+  // Beregn antall ord i kommentaren
+  const wordCount = newComment.trim() ? newComment.trim().split(/\s+/).length : 0;
+  const isWordLimitExceeded = wordCount > 100;
+
+  // For rapporttelling (endre navn på denne)
+  const reportWordCount = reportReason.trim() ? reportReason.trim().split(/\s+/).length : 0;
+  const isReportWordLimitExceeded = reportWordCount > 100;
 
   // Hent kommentarer
   useEffect(() => {
@@ -91,23 +101,30 @@ export function EventComments({ eventId, eventOwnerId }: EventCommentsProps) {
     }
   }, [eventId]);
 
-  const handleSubmitComment = async () => {
+  useEffect(() => {
+    // Sorter kommentarer etter dato (nyeste først)
+    const sortedComments = [...comments].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
+    // Begrens til displayCount
+    setVisibleComments(sortedComments.slice(0, displayCount));
+  }, [comments, displayCount]);
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newComment.trim() || isWordLimitExceeded) return;
     if (!userSession) {
       toast.error("Du må være logget inn for å kommentere");
       return;
     }
-
-    if (!newComment.trim()) {
-      toast.error("Kommentaren kan ikke være tom");
-      return;
-    }
-
+    
     setIsSubmitting(true);
     try {
       const commentId = await addComment(eventId, userSession.id, newComment.trim());
       
-      // Legg til den nye kommentaren i listen
-      const newCommentObj: Comment = {
+      const newCommentWithId: Comment = {
         id: commentId,
         eventId,
         userId: userSession.id,
@@ -115,27 +132,18 @@ export function EventComments({ eventId, eventOwnerId }: EventCommentsProps) {
         createdAt: new Date().toISOString(),
       };
       
-      setComments([...comments, newCommentObj]);
-      setNewComment(""); // Reset kommentarfeltet
-      toast.success("Kommentar lagt til");
+      setComments([...comments, newCommentWithId]);
       
-      // Hvis vi ikke allerede har brukerinformasjon for denne brukeren
       if (!commentUsers[userSession.id]) {
-        try {
-          const userData = await getUserById(userSession.id);
-          if (userData) {
-            setCommentUsers(prev => ({
-              ...prev,
-              [userSession.id]: userData
-            }));
-          }
-        } catch (error) {
-          console.error("Error fetching current user data:", error);
-        }
+        commentUsers[userSession.id] = userSession;
+        setCommentUsers({ ...commentUsers });
       }
+      
+      setNewComment("");
+      toast.success("Kommentar lagt til");
     } catch (error) {
-      console.error("Error submitting comment:", error);
-      toast.error("Kunne ikke legge til kommentar");
+      console.error("Error adding comment:", error);
+      toast.error("Kunne ikke legge til kommentar. Prøv igjen senere.");
     } finally {
       setIsSubmitting(false);
     }
@@ -168,8 +176,9 @@ export function EventComments({ eventId, eventOwnerId }: EventCommentsProps) {
     setIsReportDialogOpen(true);
   };
 
+  // Oppdater submitReport for å sjekke ordbegrensning
   const submitReport = async () => {
-    if (!userSession || !commentToReport || !reportReason.trim()) return;
+    if (!userSession || !commentToReport || !reportReason.trim() || isReportWordLimitExceeded) return;
     
     setIsReporting(true);
     try {
@@ -223,26 +232,43 @@ export function EventComments({ eventId, eventOwnerId }: EventCommentsProps) {
     return "Slett din kommentar";
   };
 
+  const handleLoadMoreComments = () => {
+    setDisplayCount(prevCount => prevCount + 4);
+  };
+
+  // Legg til en funksjon for å skjule kommentarer (tilbakestille til 4)
+  const handleCollapseComments = () => {
+    setDisplayCount(4);
+  };
+
   return (
     <div className="mt-8 space-y-6">
       <h2 className="text-2xl font-bold">Kommentarer</h2>
       
       {/* Kommentarinnlegg */}
       {userSession && (
-        <div className="space-y-3">
-          <Textarea 
-            placeholder="Skriv en kommentar..." 
+        <form onSubmit={handleSubmitComment} className="space-y-3">
+          <Textarea
+            placeholder="Skriv en kommentar..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className="min-h-24"
+            className={`min-h-24 ${isWordLimitExceeded ? 'border-red-500' : ''}`}
           />
-          <Button 
-            onClick={handleSubmitComment} 
-            disabled={isSubmitting || !newComment.trim()}
-          >
-            {isSubmitting ? "Sender..." : "Legg til kommentar"}
-          </Button>
-        </div>
+          <div className="flex justify-between items-center">
+            <span className={isWordLimitExceeded ? "text-red-500 font-medium" : "text-muted-foreground text-sm"}>
+              {wordCount} / 100 ord
+            </span>
+            {isWordLimitExceeded && (
+              <span className="text-red-500 text-sm">Ordbegrensning overskredet!</span>
+            )}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !newComment.trim() || isWordLimitExceeded}
+            >
+              {isSubmitting ? "Sender..." : "Send"}
+            </Button>
+          </div>
+        </form>
       )}
       
       {/* Kommentarliste */}
@@ -252,54 +278,81 @@ export function EventComments({ eventId, eventOwnerId }: EventCommentsProps) {
         ) : comments.length === 0 ? (
           <p className="text-muted-foreground">Ingen kommentarer ennå. Bli den første som kommenterer!</p>
         ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="flex gap-4 p-4 border rounded-lg">
-              <Avatar>
-                <AvatarImage
-                  src={commentUsers[comment.userId]?.imageUrl}
-                  alt={commentUsers[comment.userId]?.userName || "Bruker"}
-                />
-                <AvatarFallback>{getUserInitials(comment.userId)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <h4 className="font-semibold">
-                    {commentUsers[comment.userId]?.firstName || "Anonym bruker"}
-                  </h4>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {formatTimestamp(comment.createdAt)}
-                    </span>
-                    {/* Rapporteringsknapp */}
-                    {userSession && userSession.id !== comment.userId && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="h-6 w-6 rounded-full"
-                        onClick={() => handleReportComment(comment)}
-                        title="Rapporter kommentar"
-                      >
-                        <Flag className="h-4 w-4 text-amber-500" />
-                      </Button>
-                    )}
-                    {/* Sletteknapp */}
-                    {canUserDeleteComment(comment) && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="h-6 w-6 rounded-full"
-                        onClick={() => handleDeleteComment(comment)}
-                        title={getDeleteButtonTitle(comment)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
+          <>
+            {visibleComments.map((comment) => (
+              <div key={comment.id} className="flex gap-4 p-4 border rounded-lg">
+                <Avatar>
+                  <AvatarImage
+                    src={commentUsers[comment.userId]?.imageUrl}
+                    alt={commentUsers[comment.userId]?.userName || "Bruker"}
+                  />
+                  <AvatarFallback>{getUserInitials(comment.userId)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-semibold">
+                      {commentUsers[comment.userId]?.firstName || "Anonym bruker"}
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {formatTimestamp(comment.createdAt)}
+                      </span>
+                      {/* Rapporteringsknapp */}
+                      {userSession && userSession.id !== comment.userId && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-6 w-6 rounded-full"
+                          onClick={() => handleReportComment(comment)}
+                          title="Rapporter kommentar"
+                        >
+                          <Flag className="h-4 w-4 text-amber-500" />
+                        </Button>
+                      )}
+                      {/* Sletteknapp */}
+                      {canUserDeleteComment(comment) && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-6 w-6 rounded-full"
+                          onClick={() => handleDeleteComment(comment)}
+                          title={getDeleteButtonTitle(comment)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
+                  <p className="mt-1">{comment.text}</p>
                 </div>
-                <p className="mt-1">{comment.text}</p>
               </div>
-            </div>
-          ))
+            ))}
+            
+            {/* "Se flere kommentarer"-knapp eller "Skjul kommentarer"-knapp */}
+            {comments.length > 4 && (
+              <div className="text-center mt-4">
+                {/* Vis "Skjul kommentarer" når displayCount > 4 (altså når vi viser flere enn standard) */}
+                {displayCount > 4 ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCollapseComments}
+                    className="w-full"
+                  >
+                    Skjul kommentarer
+                  </Button>
+                ) : (
+                  /* Vis "Se flere" når vi ikke viser alle kommentarer */
+                  <Button 
+                    variant="outline" 
+                    onClick={handleLoadMoreComments}
+                    className="w-full"
+                  >
+                    Se flere kommentarer ({comments.length - visibleComments.length} gjenstår)
+                  </Button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -331,6 +384,7 @@ export function EventComments({ eventId, eventOwnerId }: EventCommentsProps) {
             <DialogTitle>Rapporter kommentar</DialogTitle>
             <DialogDescription>
               Fortell oss hvorfor du mener denne kommentaren bryter retningslinjene.
+              Maksimalt 100 ord.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -338,8 +392,16 @@ export function EventComments({ eventId, eventOwnerId }: EventCommentsProps) {
               placeholder="Skriv grunn for rapportering..."
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
-              className="min-h-32"
+              className={`min-h-32 ${isReportWordLimitExceeded ? 'border-red-500' : ''}`}
             />
+            <div className="flex justify-between mt-2 text-sm">
+              <span className={isReportWordLimitExceeded ? "text-red-500 font-medium" : "text-muted-foreground"}>
+                {reportWordCount} / 100 ord
+              </span>
+              {isReportWordLimitExceeded && (
+                <span className="text-red-500">Ordbegrensning overskredet!</span>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -351,7 +413,7 @@ export function EventComments({ eventId, eventOwnerId }: EventCommentsProps) {
             </Button>
             <Button 
               onClick={submitReport} 
-              disabled={isReporting || !reportReason.trim()}
+              disabled={isReporting || !reportReason.trim() || isReportWordLimitExceeded}
             >
               {isReporting ? "Sender..." : "Send rapport"}
             </Button>

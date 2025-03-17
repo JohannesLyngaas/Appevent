@@ -23,19 +23,36 @@ import { Badge } from "@/components/ui/badge";
 import type { Report, Comment, User } from "@/types";
 import { formatTimestamp } from "@/utils/formatTimestamp";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ReportedComment extends Report {
   commentData?: Comment;
   userData?: User;
+  reporterData?: User;
 }
 
 export default function CommentTable() {
   const [reports, setReports] = useState<ReportedComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [reportToAction, setReportToAction] = useState<ReportedComment | null>(null);
-  const [actionType, setActionType] = useState<"delete" | "resolve" | "reject" | null>(null);
+  const [reportToAction, setReportToAction] = useState<ReportedComment | null>(
+    null
+  );
+  const [actionType, setActionType] = useState<
+    "delete" | "resolve" | "reject" | null
+  >(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<ReportedComment | null>(
+    null
+  );
+  const [isReportDetailsOpen, setIsReportDetailsOpen] = useState(false);
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -59,10 +76,10 @@ export default function CommentTable() {
     try {
       // Slett kommentaren
       await deleteComment(reportToAction.commentData.id);
-      
+
       // Merk rapporten som løst
       await updateReportStatus(reportToAction.id, "resolved");
-      
+
       // Oppdater UI
       setReports(
         reports.map((report) =>
@@ -71,7 +88,7 @@ export default function CommentTable() {
             : report
         )
       );
-      
+
       toast.success("Kommentaren er slettet og rapporten er markert som løst.");
     } catch (error) {
       console.error("Feil ved sletting av kommentar:", error);
@@ -123,7 +140,10 @@ export default function CommentTable() {
     }
   };
 
-  const openActionDialog = (report: ReportedComment, action: "delete" | "resolve" | "reject") => {
+  const openActionDialog = (
+    report: ReportedComment,
+    action: "delete" | "resolve" | "reject"
+  ) => {
     setReportToAction(report);
     setActionType(action);
     setIsDialogOpen(true);
@@ -151,12 +171,14 @@ export default function CommentTable() {
     if (actionType === "delete") {
       return {
         title: "Slett kommentar",
-        description: "Er du sikker på at du vil slette denne kommentaren? Denne handlingen kan ikke angres.",
+        description:
+          "Er du sikker på at du vil slette denne kommentaren? Denne handlingen kan ikke angres.",
       };
     } else if (actionType === "resolve") {
       return {
         title: "Marker som løst",
-        description: "Er du sikker på at du vil markere denne rapporten som løst?",
+        description:
+          "Er du sikker på at du vil markere denne rapporten som løst?",
       };
     } else if (actionType === "reject") {
       return {
@@ -171,14 +193,20 @@ export default function CommentTable() {
   const filteredReports = reports.filter((report) => {
     const commentText = report.commentData?.text || "";
     const reason = report.reason || "";
-    const username = report.userData?.firstName || report.userData?.userName || "";
-    
+    const username =
+      report.userData?.firstName || report.userData?.userName || "";
+
     return (
       commentText.toLowerCase().includes(searchTerm.toLowerCase()) ||
       reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
       username.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
+
+  const showReportDetails = (report: ReportedComment) => {
+    setSelectedReport(report);
+    setIsReportDetailsOpen(true);
+  };
 
   if (loading) {
     return <div className="flex justify-center p-8">Henter rapporter...</div>;
@@ -187,11 +215,23 @@ export default function CommentTable() {
   const getStatusBadge = (status: "pending" | "resolved" | "rejected") => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="bg-amber-100">Ventende</Badge>;
+        return (
+          <Badge variant="outline" className="bg-amber-100">
+            Ventende
+          </Badge>
+        );
       case "resolved":
-        return <Badge variant="outline" className="bg-green-100">Løst</Badge>;
+        return (
+          <Badge variant="outline" className="bg-green-100">
+            Løst
+          </Badge>
+        );
       case "rejected":
-        return <Badge variant="outline" className="bg-red-100">Avvist</Badge>;
+        return (
+          <Badge variant="outline" className="bg-red-100">
+            Avvist
+          </Badge>
+        );
       default:
         return null;
     }
@@ -233,29 +273,54 @@ export default function CommentTable() {
             </TableHeader>
             <TableBody>
               {filteredReports.map((report) => (
-                <TableRow key={report.id} className={
-                  report.status === "resolved" 
-                    ? "bg-green-50" 
-                    : report.status === "rejected" 
-                    ? "bg-red-50" 
-                    : ""
-                }>
+                <TableRow
+                  key={report.id}
+                  className={
+                    report.status === "resolved"
+                      ? "bg-green-50"
+                      : report.status === "rejected"
+                      ? "bg-red-50"
+                      : ""
+                  }
+                >
                   <TableCell className="max-w-xs truncate">
                     {report.commentData ? (
                       report.commentData.text
                     ) : (
-                      <span className="text-muted-foreground italic">Kommentar ikke funnet</span>
+                      <span className="text-muted-foreground italic">
+                        Kommentar ikke funnet
+                      </span>
                     )}
                   </TableCell>
                   <TableCell>
                     {report.userData ? (
-                      `${report.userData.firstName || report.userData.userName || report.userData.email}`
+                      `${
+                        report.userData.firstName ||
+                        report.userData.userName ||
+                        report.userData.email
+                      }`
                     ) : (
-                      <span className="text-muted-foreground italic">Ukjent bruker</span>
+                      <span className="text-muted-foreground italic">
+                        Ukjent bruker
+                      </span>
                     )}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">{report.reason}</TableCell>
-                  <TableCell>{report.reportedBy}</TableCell>
+                  <TableCell
+                    className="max-w-xs truncate cursor-pointer hover:text-blue-600"
+                    onClick={() => showReportDetails(report)}
+                    title="Klikk for å se hele rapporten"
+                  >
+                    {report.reason}
+                  </TableCell>
+                  <TableCell>
+                    {report.reporterData
+                      ? `${
+                          report.reporterData.firstName ||
+                          report.reporterData.userName ||
+                          report.reporterData.email
+                        }`
+                      : report.reportedBy}
+                  </TableCell>
                   <TableCell>{formatTimestamp(report.timestamp)}</TableCell>
                   <TableCell>{getStatusBadge(report.status)}</TableCell>
                   <TableCell className="text-right">
@@ -293,7 +358,10 @@ export default function CommentTable() {
                         </>
                       )}
                       {report.commentData?.eventId && (
-                        <Link href={`/event_page?id=${report.commentData.eventId}`} passHref>
+                        <Link
+                          href={`/event_page?id=${report.commentData.eventId}`}
+                          passHref
+                        >
                           <Button
                             variant="outline"
                             size="icon"
@@ -319,6 +387,72 @@ export default function CommentTable() {
         title={getDialogContent().title}
         description={getDialogContent().description}
       />
+
+      <Dialog open={isReportDetailsOpen} onOpenChange={setIsReportDetailsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Rapportdetaljer</DialogTitle>
+            <DialogDescription>
+              {selectedReport?.commentData ? (
+                <span>Rapport om en kommentar</span>
+              ) : (
+                <span>Rapportert kommentar er ikke lenger tilgjengelig</span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="my-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">
+              Kommentartekst:
+            </h3>
+            <div className="p-4 bg-muted rounded-md whitespace-pre-wrap">
+              {selectedReport?.commentData?.text ||
+                "Kommentarteksten er ikke tilgjengelig"}
+            </div>
+          </div>
+          <div className="my-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-1">
+              Grunnlag for rapportering:
+            </h3>
+            <div className="p-4 bg-muted rounded-md whitespace-pre-wrap">
+              {selectedReport?.reason || "Ingen begrunnelse oppgitt"}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                Rapportert av:
+              </h3>
+              <div>
+                {selectedReport?.reporterData
+                  ? `${
+                      selectedReport.reporterData.firstName ||
+                      selectedReport.reporterData.userName ||
+                      selectedReport.reporterData.email
+                    }`
+                  : selectedReport?.reportedBy || "Ukjent"}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                Rapportert:
+              </h3>
+              <div>
+                {selectedReport
+                  ? formatTimestamp(selectedReport.timestamp)
+                  : ""}
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsReportDetailsOpen(false)}
+            >
+              Lukk
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-} 
+}

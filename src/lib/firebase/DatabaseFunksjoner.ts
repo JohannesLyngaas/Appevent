@@ -321,7 +321,13 @@ export async function updateReportStatus(
   reportId: string,
   status: "pending" | "resolved" | "rejected"
 ): Promise<void> {
-  await updateDoc(doc(firebaseDb, "reports", reportId), { status });
+  try {
+    const reportRef = doc(firebaseDb, "reports", reportId);
+    await updateDoc(reportRef, { status });
+  } catch (error) {
+    console.error("Error updating report status:", error);
+    throw error;
+  }
 }
 
 export async function registerEventParticipant(
@@ -505,17 +511,20 @@ export async function getReportedComments(): Promise<Report[]> {
 
 // Hent full informasjon om rapporterte kommentarer (inkl. kommentarinnhold)
 export async function getReportedCommentDetails(): Promise<
-  Array<Report & { commentData?: Comment; userData?: User }>
+  Array<
+    Report & { commentData?: Comment; userData?: User; reporterData?: User }
+  >
 > {
   try {
     // Først hent alle rapporter for kommentarer
     const reports = await getReportedComments();
 
-    // Deretter hent detaljer for hver kommentar og bruker
+    // Deretter hent detaljer for hver kommentar, bruker og rapportør
     const reportsWithDetails = await Promise.all(
       reports.map(async (report) => {
         let commentData: Comment | undefined;
         let userData: User | undefined;
+        let reporterData: User | undefined;
 
         try {
           // Hent kommentaren
@@ -525,7 +534,7 @@ export async function getReportedCommentDetails(): Promise<
           );
 
           if (commentDoc.exists()) {
-            const commentData = {
+            commentData = {
               id: commentDoc.id,
               ...commentDoc.data(),
             } as Comment;
@@ -537,8 +546,14 @@ export async function getReportedCommentDetails(): Promise<
                 userData = userDoc;
               }
             }
+          }
 
-            return { ...report, commentData, userData };
+          // Hent brukeren som rapporterte
+          if (report.reportedBy) {
+            const reporterDoc = await getUserById(report.reportedBy);
+            if (reporterDoc) {
+              reporterData = reporterDoc;
+            }
           }
         } catch (error) {
           console.error(
@@ -548,13 +563,120 @@ export async function getReportedCommentDetails(): Promise<
         }
 
         // Returner rapporten selv om vi ikke fant kommentaren (kan ha blitt slettet)
-        return { ...report, commentData, userData };
+        return { ...report, commentData, userData, reporterData };
       })
     );
 
     return reportsWithDetails;
   } catch (error) {
     console.error("Error fetching reported comment details:", error);
+    throw error;
+  }
+}
+
+// Rapportere et arrangement
+export async function reportEvent(
+  userId: string,
+  eventId: string,
+  reason: string
+): Promise<string> {
+  try {
+    const reportsCollection = collection(firebaseDb, "reports");
+    const reportData = {
+      reportedBy: userId,
+      reportedItem: {
+        type: "event",
+        id: eventId,
+      },
+      reason: reason,
+      status: "pending",
+      timestamp: new Date().toISOString(),
+    };
+
+    const docRef = await addDoc(reportsCollection, reportData);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error reporting event:", error);
+    throw error;
+  }
+}
+
+// Hent rapporterte arrangementer
+export async function getReportedEvents(): Promise<Report[]> {
+  try {
+    const reportsCollection = collection(firebaseDb, "reports");
+    const q = query(
+      reportsCollection,
+      where("reportedItem.type", "==", "event")
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as Report)
+    );
+  } catch (error) {
+    console.error("Error fetching reported events:", error);
+    throw error;
+  }
+}
+
+// Hent full informasjon om rapporterte arrangementer (inkl. arrangementdetaljer)
+export async function getReportedEventDetails(): Promise<
+  Array<Report & { eventData?: Event; creatorData?: User; reporterData?: User }>
+> {
+  try {
+    // Først hent alle rapporter for arrangementer
+    const reports = await getReportedEvents();
+
+    // Deretter hent detaljer for hvert arrangement, arrangementseier og rapportør
+    const reportsWithDetails = await Promise.all(
+      reports.map(async (report) => {
+        let eventData: Event | undefined;
+        let creatorData: User | undefined;
+        let reporterData: User | undefined;
+
+        try {
+          // Hent arrangementet
+          const eventId = report.reportedItem.id;
+          const eventDoc = await getDoc(doc(firebaseDb, "events", eventId));
+
+          if (eventDoc.exists()) {
+            const data = eventDoc.data();
+            eventData = {
+              id: eventDoc.id,
+              ...data,
+            } as Event;
+
+            // Hent brukeren som opprettet arrangementet
+            if (eventData.createdBy) {
+              const userDoc = await getUserById(eventData.createdBy);
+              if (userDoc) {
+                creatorData = userDoc;
+              }
+            }
+          }
+
+          // Hent brukeren som rapporterte
+          if (report.reportedBy) {
+            const reporterDoc = await getUserById(report.reportedBy);
+            if (reporterDoc) {
+              reporterData = reporterDoc;
+            }
+          }
+        } catch (error) {
+          console.error(
+            `Error fetching details for event report ${report.id}:`,
+            error
+          );
+        }
+
+        return { ...report, eventData, creatorData, reporterData };
+      })
+    );
+
+    return reportsWithDetails;
+  } catch (error) {
+    console.error("Error fetching reported event details:", error);
     throw error;
   }
 }
