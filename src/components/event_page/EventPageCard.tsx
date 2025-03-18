@@ -12,6 +12,7 @@ import { AttendanceButtonAlert } from "@/components/event_page/AttendanceButtonA
 import { CloseButton } from "@/components/event_page/CloseButton";
 import type { Event, EventParticipant, User } from "@/types";
 import { getCurrentUserID } from "@/lib/firebase/auth/auth";
+import { useUserSession } from "@/hooks/useUserSession";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -31,8 +32,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EventComments } from "@/components/event_page/EventComments";
+import { EventReportButton } from "@/components/event_page/EventReportButton";
 
 export function EventPageCard() {
+  const userSession = useUserSession(null);
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
   const [participantUsers, setParticipantUsers] = useState<User[]>([]);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
@@ -538,6 +542,22 @@ export function EventPageCard() {
           )}
         </DialogContent>
       </Dialog>
+
+      <CardContent className="pt-6">
+        <EventComments
+          eventId={eventId || ""}
+          eventOwnerId={eventToRender.createdBy}
+        />
+      </CardContent>
+
+      <CardFooter className="flex justify-between items-center pt-6 border-t">
+        <div className="flex gap-2">
+          {/* Eksisterende knapper for å delta/forlate arrangement */}
+        </div>
+        {userSession && userSession.id !== eventToRender.createdBy && (
+          <EventReportButton eventId={eventId || ""} />
+        )}
+      </CardFooter>
     </div>
   );
 }
