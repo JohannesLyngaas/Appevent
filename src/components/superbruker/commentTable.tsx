@@ -216,19 +216,19 @@ export default function CommentTable() {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="outline" className="bg-amber-100">
+          <Badge variant="outline" className="bg-amber-300 text-foreground">
             Ventende
           </Badge>
         );
       case "resolved":
         return (
-          <Badge variant="outline" className="bg-green-100">
+          <Badge variant="outline" className="bg-green-400">
             Løst
           </Badge>
         );
       case "rejected":
         return (
-          <Badge variant="outline" className="bg-red-100">
+          <Badge variant="outline" className="bg-red-400">
             Avvist
           </Badge>
         );
@@ -277,10 +277,10 @@ export default function CommentTable() {
                   key={report.id}
                   className={
                     report.status === "resolved"
-                      ? "bg-green-50"
+                      ? "bg-green-600"
                       : report.status === "rejected"
-                      ? "bg-red-50"
-                      : ""
+                      ? "bg-red-500"
+                      : "bg-amber-500"
                   }
                 >
                   <TableCell className="max-w-xs truncate">
