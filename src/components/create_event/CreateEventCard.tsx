@@ -27,7 +27,8 @@ import type { User } from "@/types";
 import { CloseButton } from "@/components/create_event/CloseButton";
 import { ImageUploader } from "./ImageUploader";
 
-const defaultImageUrl = "https://res.cloudinary.com/dxeluefou/image/upload/v1741207681/party_tqbwhb.jpg";
+const defaultImageUrl =
+  "https://res.cloudinary.com/dxeluefou/image/upload/v1741608101/cat_iytvus.jpg";
 
 const eventSchema = z.object({
   title: z.string().min(3, "Tittel må være minst 3 tegn").max(100),
@@ -65,7 +66,7 @@ export default function CreateEventCard() {
   const [userSearch, setUserSearch] = useState("");
   const [userSuggestions, setUserSuggestions] = useState<User[]>([]);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [publicId, setPublicId] = useState<string | null>(null);
+  const [publicId, setPublicId] = useState<string | null>(defaultImageUrl);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
@@ -93,7 +94,7 @@ export default function CreateEventCard() {
         });
         const data = await response.json();
         if (data.success) {
-          setUploadedImageUrl(null);
+          setUploadedImageUrl(defaultImageUrl);
           setPublicId(null);
           form.setValue("imageUrl", "");
         } else {

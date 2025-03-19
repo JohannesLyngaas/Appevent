@@ -15,14 +15,14 @@ export function ImageUploader({
   onDeleteSuccess,
   isOptional = true,
 }: ImageUploaderProps) {
+  const defaultImageUrl =
+  "https://res.cloudinary.com/dxeluefou/image/upload/v1741608101/cat_iytvus.jpg";
+
   const [uploadConfirmed, setUploadConfirmed] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | undefined>(
-    undefined
+    defaultImageUrl
   );
   const [publicId, setPublicId] = useState<string | undefined>(undefined);
-
-  const defaultImageUrl =
-    "https://res.cloudinary.com/dxeluefou/image/upload/v1741608101/cat_iytvus.jpg";
 
   const handleDeleteImage = async () => {
     if (publicId) {
@@ -35,7 +35,7 @@ export function ImageUploader({
         const data = await response.json();
         if (data.success) {
           //Reset alt
-          setUploadedImageUrl(undefined);
+          setUploadedImageUrl(defaultImageUrl);
           setPublicId(undefined);
           setUploadConfirmed(false);
 
