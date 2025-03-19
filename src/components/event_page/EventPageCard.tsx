@@ -36,6 +36,7 @@ import ImageSlider from "./ImageSlider";
 import { ImagesUploader } from "./ImagesUploader";
 import { addDoc, collection, deleteDoc, doc } from "firebase/firestore";
 import { firebaseDb } from "@/lib/firebase/config";
+import { cn } from "@/lib/utils";
 
 export function EventPageCard() {
   const userSession = useUserSession(null);
@@ -344,7 +345,7 @@ export function EventPageCard() {
               alt={ `Bilde av ${eventToRender.title}` }
               className="h-full w-full object-cover"
             />
-            <Badge className="absolute left-4 top-4 bg-primary text-primary-foreground">
+            <Badge variant={eventToRender.visibility === "public" ? "default" : "destructive"} className="absolute left-4 top-4 text-primary-foreground">
               { eventToRender.visibility === "public" ? "Offentlig" : "Privat" }
             </Badge>
           </div>

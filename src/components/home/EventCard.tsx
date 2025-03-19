@@ -9,13 +9,10 @@ interface EventCardProps {
   date?: string
 }
 
-// Komponent for å vise et arrangement som et kort
-// Tar inn et EventCardProps-objekt og viser tittel, dato, tid, sted og antall deltakere
 export default function EventCard({ title, location, imageUrl, date }: EventCardProps) {
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-lg">
+    <Card className="max-w-sm w-full flex flex-col overflow-hidden transition-all hover:shadow-lg">
       <div className="relative h-auto w-full sm:h-64">
-      {/* Viser ikke noe bilde dersom imageUrl er null eller undefined */}
       {imageUrl && (
         <Image
           src={imageUrl}
