@@ -17,6 +17,7 @@ import {
   removeEventParticipant,
 } from "@/lib/firebase/DatabaseFunksjoner";
 import { getCurrentUserID } from "@/lib/firebase/auth/auth";
+import { toast } from "sonner";
 
 interface AttendanceButtonAlertProps {
   isAttending: boolean;
@@ -48,11 +49,12 @@ export function AttendanceButtonAlert({
       console.log(`Attempting to register user ${userId} for event ${eventId}`);
       await registerEventParticipant(userId, eventId);
       onAttend();
+      toast.success("Du er nå påmeldt!");
     } catch (error) {
       console.error("Error registering for event:", error);
       // Show more specific error message
       if (error instanceof Error) {
-        alert(`Feil ved påmelding: ${error.message}`);
+        toast.error(error.message);
       } else {
         alert("Det oppstod en feil. Prøv igjen senere.");
       }
@@ -74,10 +76,11 @@ export function AttendanceButtonAlert({
       }
       onCancel();
       setShowConfirmDialog(false);
+      toast.success("Du er nå meldt av!");
     } catch (error) {
       console.error("Error cancelling registration:", error);
       if (error instanceof Error) {
-        alert(`Feil ved avmelding: ${error.message}`);
+        toast.error(error.message);
       } else {
         alert("Det oppstod en feil ved avmelding.");
       }
