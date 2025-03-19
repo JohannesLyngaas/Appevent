@@ -27,8 +27,7 @@ import type { User } from "@/types";
 import { CloseButton } from "@/components/create_event/CloseButton";
 import { ImageUploader } from "./ImageUploader";
 
-const defaultImageUrl =
-  "https://res.cloudinary.com/dxeluefou/image/upload/c_fill,g_auto,h_250,w_970/b_rgb:000000,e_gradient_fade,y_-0.50/c_scale,co_rgb:ffffff,fl_relative,l_text:montserrat_25_style_light_align_center:Shop%20Now,w_0.5,y_0.18/v1741776117/defaultEventImage_edhjbz.png";
+const defaultImageUrl = "https://res.cloudinary.com/dxeluefou/image/upload/v1741207681/party_tqbwhb.jpg";
 
 const eventSchema = z.object({
   title: z.string().min(3, "Tittel må være minst 3 tegn").max(100),
@@ -40,7 +39,21 @@ const eventSchema = z.object({
   endDate: z.string().optional(),
   visibility: z.enum(["public", "private"]),
   imageUrl: z.string().optional(),
+  theme: z.string().min(1, "Velg et tema"),
 });
+
+const eventThemes = [
+  "Konsert",
+  "Sportsarrangement",
+  "Matfestival",
+  "Dugnad",
+  "Filmvisning",
+  "Workshop",
+  "Kunstutstilling",
+  "Temafest",
+  "Lanseringsevent",
+  "Nettverksmøte",
+];
 
 type EventFormValues = z.infer<typeof eventSchema>;
 
@@ -66,6 +79,7 @@ export default function CreateEventCard() {
       endDate: "",
       visibility: "public",
       imageUrl: "",
+      theme: "",
     },
   });
 
@@ -141,6 +155,7 @@ export default function CreateEventCard() {
           endTime: data.endTime || "",
           endDate: data.endDate || "",
           createdAt: new Date().toISOString(),
+          theme: data.theme || "",
         },
         invitedEmails,
         userSession?.id || ""
@@ -158,99 +173,99 @@ export default function CreateEventCard() {
 
   return (
     <div className="flex flex-col gap-2 max-w-2xl w-full">
-      <CloseButton onClick={handleDeleteImage} publicId={publicId} />
-      <Form {...form}>
+      <CloseButton onClick={ handleDeleteImage } publicId={ publicId } />
+      <Form { ...form }>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={ form.handleSubmit(onSubmit) }
           className="flex flex-col justify-center items-center space-y-4 bg-card border rounded-lg p-3"
         >
           <div className="w-full items-center flex flex-col">
             <FormLabel className="text-base">Last opp bilde</FormLabel>
             <ImageUploader
-              isOptional={true}
-              onUploadSuccess={(url, id) => {
+              isOptional={ true }
+              onUploadSuccess={ (url, id) => {
                 setUploadedImageUrl(url);
                 setPublicId(id);
                 form.setValue("imageUrl", url);
-              }}
-              onDeleteSuccess={() => {
+              } }
+              onDeleteSuccess={ () => {
                 setUploadedImageUrl(null);
                 setPublicId(null);
                 form.setValue("imageUrl", "");
-              }}
+              } }
             />
           </div>
 
           <div className="flex flex-col w-full gap-y-5">
             <FormField
-              control={form.control}
+              control={ form.control }
               name="title"
-              render={({ field }) => (
+              render={ ({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">Tittel</FormLabel>
                   <FormControl>
-                    <Input placeholder="Skriv inn tittel" {...field} />
+                    <Input placeholder="Skriv inn tittel" { ...field } />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
+              ) }
             />
 
             <FormField
-              control={form.control}
+              control={ form.control }
               name="description"
-              render={({ field }) => (
+              render={ ({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">Beskrivelse</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Skriv en beskrivelse" {...field} />
+                    <Textarea placeholder="Skriv en beskrivelse" { ...field } />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
+              ) }
             />
 
             <FormField
-              control={form.control}
+              control={ form.control }
               name="location"
-              render={({ field }) => (
+              render={ ({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">Sted</FormLabel>
                   <FormControl>
-                    <Input placeholder="Skriv inn sted" {...field} />
+                    <Input placeholder="Skriv inn sted" { ...field } />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
+              ) }
             />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
-                control={form.control}
+                control={ form.control }
                 name="eventDate"
-                render={({ field }) => (
+                render={ ({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Startdato</FormLabel>
                     <FormControl>
                       <Input
                         type="date"
-                        min={today}
-                        value={field.value}
-                        onChange={(e) => {
+                        min={ today }
+                        value={ field.value }
+                        onChange={ (e) => {
                           field.onChange(e.target.value);
                           form.setValue("endDate", "");
-                        }}
+                        } }
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                ) }
               />
 
               <FormField
-                control={form.control}
+                control={ form.control }
                 name="startTime"
-                render={({ field }) => (
+                render={ ({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Starttid</FormLabel>
                     <FormControl>
@@ -261,42 +276,42 @@ export default function CreateEventCard() {
                             ? new Date().toISOString().slice(11, 16)
                             : undefined
                         }
-                        value={field.value}
-                        onChange={(e) => {
+                        value={ field.value }
+                        onChange={ (e) => {
                           field.onChange(e.target.value);
                           form.setValue("endTime", "");
-                        }}
+                        } }
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                ) }
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 w-full">
               <FormField
-                control={form.control}
+                control={ form.control }
                 name="endDate"
-                render={({ field }) => (
+                render={ ({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Sluttdato</FormLabel>
                     <FormControl>
                       <Input
                         type="date"
-                        min={form.watch("eventDate") || today}
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
+                        min={ form.watch("eventDate") || today }
+                        value={ field.value }
+                        onChange={ (e) => field.onChange(e.target.value) }
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                ) }
               />
 
               <FormField
-                control={form.control}
+                control={ form.control }
                 name="endTime"
-                render={({ field }) => (
+                render={ ({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Sluttid</FormLabel>
                     <FormControl>
@@ -307,34 +322,63 @@ export default function CreateEventCard() {
                             ? form.watch("startTime")
                             : undefined
                         }
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
+                        value={ field.value }
+                        onChange={ (e) => field.onChange(e.target.value) }
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                ) }
               />
+            </div>
+            <div className="flex flex-row justify-between">
               <FormField
-                control={form.control}
+                control={ form.control }
                 name="visibility"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col gap-2">
+                render={ ({ field }) => (
+                  <FormItem className="flex flex-col self-start">
                     <FormLabel className="text-base">
-                      Synlighet:{" "}
-                      {field.value === "private" ? "Privat" : "Offentlig"}
+                      Synlighet:{ " " }
+                      { field.value === "private" ? "Privat" : "Offentlig" }
                     </FormLabel>
                     <FormControl>
                       <Switch
-                        checked={field.value === "private"}
-                        onCheckedChange={(checked: boolean) =>
+                        checked={ field.value === "private" }
+                        onCheckedChange={ (checked: boolean) =>
                           field.onChange(checked ? "private" : "public")
                         }
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                ) }
+              />
+              <FormField
+                control={ form.control }
+                name="theme"
+                render={ ({ field }) => (
+                  <FormItem className="self-end w-auto">
+                    <FormLabel className="text-base">Velg tema</FormLabel>
+                    <FormControl>
+                      <select
+                        { ...field }
+                        className="border p-2 rounded w-full bg-inherit"
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      >
+                        <option value="" disabled>
+                          Velg et tema
+                        </option>
+                        { eventThemes.map((theme, index) => (
+                          <option key={ index } value={ theme }>
+                            { theme }
+                          </option>
+                        )) }
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                ) }
               />
             </div>
             <FormItem>
@@ -342,45 +386,45 @@ export default function CreateEventCard() {
               <FormControl>
                 <Input
                   placeholder="Søk etter e-post..."
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
+                  value={ userSearch }
+                  onChange={ (e) => setUserSearch(e.target.value) }
                 />
               </FormControl>
             </FormItem>
             <div className="flex flex-col gap-2">
               <ul className="flex flex-col gap-1 max-h-44 overflow-auto">
-                {userSuggestions.map((user) => (
+                { userSuggestions.map((user) => (
                   <Button
-                    key={user.id}
-                    variant={"ghost"}
+                    key={ user.id }
+                    variant={ "ghost" }
                     type="button"
                     className="max-w-fit hover:scale-100"
-                    onClick={() => handleUserSelect(user)}
-                  >{`${user.firstName}: ${user.email}`}</Button>
-                ))}
+                    onClick={ () => handleUserSelect(user) }
+                  >{ `${user.firstName}: ${user.email}` }</Button>
+                )) }
               </ul>
 
               <p className="text-base font-medium">Inviterte brukere: </p>
               <div className="flex flex-row flex-wrap">
-                {invitedEmails.map((email) => (
+                { invitedEmails.map((email) => (
                   <Badge
-                    key={email}
+                    key={ email }
                     className="mr-2 mb-2 max-w-fit p-1 px-2 hover:bg-slate-950"
                   >
-                    {email}{" "}
+                    { email }{ " " }
                     <span
                       className="cursor-pointer ml-1"
-                      onClick={() => handleRemoveInvite(email)}
+                      onClick={ () => handleRemoveInvite(email) }
                     >
                       ✕
                     </span>
                   </Badge>
-                ))}
+                )) }
               </div>
             </div>
           </div>
           <Button
-            variant={"default"}
+            variant={ "default" }
             type="submit"
             className="w-full hover:scale-100 text-lg font-semibold"
           >

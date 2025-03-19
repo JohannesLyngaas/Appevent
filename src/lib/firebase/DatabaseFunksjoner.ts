@@ -47,6 +47,7 @@ export async function getAllEvents(): Promise<Event[]> {
       invitedUsers: data.invitedUsers || [],
       imageUrl: data.imageUrl || "",
       createdAt: data.createdAt || "",
+      theme: data.theme || "",
     } as Event;
   });
 }
@@ -107,10 +108,54 @@ export async function getEventsWhereUserIsInvited(
   return invitedEvents.filter((event) => event !== null) as Event[];
 }
 
+/* export async function joinEvent(
+  userId: string,
+  eventId: string
+): Promise<void> {
+  const participantsDocRef = doc(
+    firebaseDb,
+    "events",
+    eventId,
+    "participants",
+    userId
+  );
+  const invitedDocRef = doc(
+    firebaseDb,
+    "events",
+    eventId,
+    "invitedUsers",
+    userId
+  );
+
+
+  const participantSnap = await getDoc(participantsDocRef);
+  if (participantSnap.exists()) return;
+
+  const invitedSnap = await getDoc(invitedDocRef);
+  if (invitedSnap.exists()) await deleteDoc(invitedDocRef);
+
+  await setDoc(participantsDocRef, {});
+}
+ */
+
 export async function joinEvent(
   userId: string,
   eventId: string
 ): Promise<void> {
+  const eventDocRef = doc(firebaseDb, "events", eventId);
+  const eventSnap = await getDoc(eventDocRef);
+
+  if (!eventSnap.exists()) return;
+
+  const eventData = eventSnap.data() as Event;
+  const currentDate = new Date();
+  const eventEndDate = eventData.endDate
+    ? new Date(eventData.endDate)
+    : new Date(eventData.eventDate);
+
+  // Prevent joining if the event has ended
+  if (eventEndDate < currentDate) return;
+
   const participantsDocRef = doc(
     firebaseDb,
     "events",
@@ -339,6 +384,24 @@ export async function registerEventParticipant(
   }
 
   try {
+    const eventDocRef = doc(firebaseDb, "events", eventId);
+    const eventSnap = await getDoc(eventDocRef);
+
+    if (!eventSnap.exists()) {
+      throw new Error("Arrangementet finnes ikke");
+    }
+
+    const eventData = eventSnap.data() as Event;
+    const currentDate = new Date();
+    const eventEndDate = eventData.endDate
+      ? new Date(eventData.endDate)
+      : new Date(eventData.eventDate);
+
+    if (eventEndDate < currentDate) {
+      console.log("Cannot register. The event has ended.");
+      throw new Error("Kan ikke melde deg på, arrangementet er over.")
+    }
+
     // Use a subcollection approach
     const participantsRef = collection(
       firebaseDb,
@@ -347,7 +410,7 @@ export async function registerEventParticipant(
       "participants"
     );
 
-    // Check if already registered (adjust query for subcollection)
+    // Check if already registered
     const participantDoc = doc(participantsRef, userId);
     const docSnap = await getDoc(participantDoc);
 
