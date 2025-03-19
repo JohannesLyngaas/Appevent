@@ -71,6 +71,7 @@ export function EventPageCard() {
               eventDate: foundEvent.eventDate,
               endDate: foundEvent.endDate || "(bruker eventDate som fallback)",
             });
+            console.log("THEME: ", foundEvent.theme)
           }
         }
       } catch (error) {
@@ -252,16 +253,16 @@ export function EventPageCard() {
       console.error("No eventId provided!");
       return;
     }
-  
+
     try {
       const imagesCollectionRef = collection(firebaseDb, `events/${eventId}/images`);
-  
+
       const docRef = await addDoc(imagesCollectionRef, {
         url,
         publicId,
         uploadedAt: new Date(),
       });
-      
+
       setImageId(docRef.id);
       console.log("Image successfully uploaded to Firestore!");
     } catch (error) {
@@ -275,11 +276,11 @@ export function EventPageCard() {
       console.error("No eventId provided!");
       return;
     }
-  
+
     try {
       const imageDocRef = doc(firebaseDb, `events/${eventId}/images/${imageId}`);
       await deleteDoc(imageDocRef);
-  
+
       console.log("Image successfully deleted from Firestore!");
     } catch (error) {
       console.error("Error deleting image from Firestore:", error);
@@ -319,6 +320,7 @@ export function EventPageCard() {
     createdBy: "Arrangør",
     visibility: "public",
     imageUrl: "",
+    theme: "Konsert",
     createdAt: new Date().toISOString(),
     invitedUsers: [],
   };
@@ -339,37 +341,37 @@ export function EventPageCard() {
                 eventToRender.imageUrl ||
                 "/placeholder.svg?height=400&width=800"
               }
-              alt={`Bilde av ${eventToRender.title}`}
+              alt={ `Bilde av ${eventToRender.title}` }
               className="h-full w-full object-cover"
             />
             <Badge className="absolute left-4 top-4 bg-primary text-primary-foreground">
-              {eventToRender.visibility === "public" ? "Offentlig" : "Privat"}
+              { eventToRender.visibility === "public" ? "Offentlig" : "Privat" }
             </Badge>
           </div>
 
           <div className="mb-8">
             <h1 className="mb-2 text-3xl font-bold md:text-4xl">
-              {eventToRender.title}
+              { eventToRender.title }
             </h1>
             <div className="flex flex-wrap gap-4 text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
                 <span>
-                  {formatDate(eventToRender.eventDate)}
-                  {eventToRender.endDate &&
+                  { formatDate(eventToRender.eventDate) }
+                  { eventToRender.endDate &&
                     eventToRender.endDate !== eventToRender.eventDate &&
-                    ` - ${formatDate(eventToRender.endDate)}`}
+                    ` - ${formatDate(eventToRender.endDate)}` }
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 <span>
-                  {eventToRender.startTime} - {eventToRender.endTime}
+                  { eventToRender.startTime } - { eventToRender.endTime }
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                <span>{eventToRender.location}</span>
+                <span>{ eventToRender.location }</span>
               </div>
             </div>
           </div>
@@ -377,18 +379,19 @@ export function EventPageCard() {
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Om arrangementet</CardTitle>
+              <CardDescription className="text-base">Tema: {eventToRender.theme}</CardDescription>
             </CardHeader>
             <CardContent>
-              {descriptionParagraphs.map((paragraph, index) => (
+              { descriptionParagraphs.map((paragraph, index) => (
                 <p
-                  key={index}
+                  key={ index }
                   className={
                     index < descriptionParagraphs.length - 1 ? "mb-4" : ""
                   }
                 >
-                  {paragraph}
+                  { paragraph }
                 </p>
-              ))}
+              )) }
             </CardContent>
           </Card>
         </div>
@@ -403,30 +406,30 @@ export function EventPageCard() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Dette er et{" "}
-                {eventToRender.visibility === "public" ? "offentlig" : "privat"}{" "}
+                Dette er et{ " " }
+                { eventToRender.visibility === "public" ? "offentlig" : "privat" }{ " " }
                 arrangement.
-                {eventToRender.visibility === "private"
+                { eventToRender.visibility === "private"
                   ? " Du har blitt invitert til å delta."
-                  : " Alle kan melde seg på."}
+                  : " Alle kan melde seg på." }
               </p>
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm">{formatDate(eventToRender.eventDate)}</p>
+                <p className="text-sm">{ formatDate(eventToRender.eventDate) }</p>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <p className="text-sm">
-                  {eventToRender.startTime} - {eventToRender.endTime}
+                  { eventToRender.startTime } - { eventToRender.endTime }
                 </p>
               </div>
             </CardContent>
             <CardFooter>
               <AttendanceButtonAlert
-                isAttending={isAttending}
-                onAttend={handleAttend}
-                onCancel={handleCancel}
-                eventId={eventToRender.id}
+                isAttending={ isAttending }
+                onAttend={ handleAttend }
+                onCancel={ handleCancel }
+                eventId={ eventToRender.id }
               />
             </CardFooter>
           </Card>
@@ -445,25 +448,25 @@ export function EventPageCard() {
                     }
                     alt="Arrangør logo"
                   />
-                  <AvatarFallback>{getOrganizerInitials()}</AvatarFallback>
+                  <AvatarFallback>{ getOrganizerInitials() }</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{getOrganizerDisplayName()}</p>
+                  <p className="font-medium">{ getOrganizerDisplayName() }</p>
                   <p className="text-sm text-muted-foreground">
-                    {organizer?.email && `Kontakt: ${organizer.email}`}
+                    { organizer?.email && `Kontakt: ${organizer.email}` }
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Opprettet:{" "}
-                    {new Date(eventToRender.createdAt).toLocaleDateString(
+                    Opprettet:{ " " }
+                    { new Date(eventToRender.createdAt).toLocaleDateString(
                       "no-NO"
-                    )}
+                    ) }
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {eventToRender.visibility === "private" &&
+          { eventToRender.visibility === "private" &&
             eventToRender.invitedUsers &&
             eventToRender.invitedUsers.length > 0 && (
               <Card>
@@ -472,34 +475,34 @@ export function EventPageCard() {
                     <span>Inviterte</span>
                     <Badge variant="outline" className="ml-2">
                       <Users className="mr-1 h-3 w-3" />
-                      {eventToRender.invitedUsers.length}
+                      { eventToRender.invitedUsers.length }
                     </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex -space-x-2">
-                    {eventToRender.invitedUsers.slice(0, 8).map((user, i) => (
-                      <Avatar key={i} className="border-2 border-background">
+                    { eventToRender.invitedUsers.slice(0, 8).map((user, i) => (
+                      <Avatar key={ i } className="border-2 border-background">
                         <AvatarImage
-                          src={`/placeholder.svg?height=40&width=40&text=${user.substring(
+                          src={ `/placeholder.svg?height=40&width=40&text=${user.substring(
                             0,
                             2
-                          )}`}
+                          )}` }
                         />
                         <AvatarFallback>
-                          {user.substring(0, 2).toUpperCase()}
+                          { user.substring(0, 2).toUpperCase() }
                         </AvatarFallback>
                       </Avatar>
-                    ))}
-                    {eventToRender.invitedUsers.length > 8 && (
+                    )) }
+                    { eventToRender.invitedUsers.length > 8 && (
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                        +{eventToRender.invitedUsers.length - 8}
+                        +{ eventToRender.invitedUsers.length - 8 }
                       </div>
-                    )}
+                    ) }
                   </div>
                 </CardContent>
               </Card>
-            )}
+            ) }
 
           <Card>
             <CardHeader>
@@ -507,14 +510,14 @@ export function EventPageCard() {
                 <span>Deltakere</span>
                 <Badge variant="outline" className="ml-2">
                   <Users className="mr-1 h-3 w-3" />
-                  {participants.length}
+                  { participants.length }
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex -space-x-2">
-                {previewParticipantUsers.map((user, i) => (
-                  <Avatar key={user.id} className="border-2 border-background">
+                { previewParticipantUsers.map((user, i) => (
+                  <Avatar key={ user.id } className="border-2 border-background">
                     <AvatarImage
                       src={
                         user.imageUrl ||
@@ -523,23 +526,23 @@ export function EventPageCard() {
                           2
                         )}`
                       }
-                      alt={getDisplayName(user)}
+                      alt={ getDisplayName(user) }
                     />
-                    <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+                    <AvatarFallback>{ getUserInitials(user) }</AvatarFallback>
                   </Avatar>
-                ))}
-                {participants.length > 8 && (
+                )) }
+                { participants.length > 8 && (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                    +{participants.length - 8}
+                    +{ participants.length - 8 }
                   </div>
-                )}
+                ) }
               </div>
               <div className="mt-4">
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  onClick={handleViewAllParticipants}
+                  onClick={ handleViewAllParticipants }
                 >
                   <Users className="mr-2 h-4 w-4" />
                   Se alle deltakere
@@ -551,78 +554,78 @@ export function EventPageCard() {
       </div>
 
       <Dialog
-        open={showParticipantsDialog}
-        onOpenChange={setShowParticipantsDialog}
+        open={ showParticipantsDialog }
+        onOpenChange={ setShowParticipantsDialog }
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Alle deltakere</DialogTitle>
             <DialogDescription>
-              {participants.length}{" "}
-              {participants.length === 1 ? "person" : "personer"} deltar på
+              { participants.length }{ " " }
+              { participants.length === 1 ? "person" : "personer" } deltar på
               dette arrangementet
             </DialogDescription>
           </DialogHeader>
 
-          {loadingParticipants ? (
+          { loadingParticipants ? (
             <div className="flex justify-center py-8">Laster deltakere...</div>
           ) : (
             <div className="max-h-96 overflow-y-auto">
-              {participantUsers.length === 0 ? (
+              { participantUsers.length === 0 ? (
                 <p className="text-center text-muted-foreground">
                   Ingen deltakere ennå
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {participantUsers.map((user) => (
+                  { participantUsers.map((user) => (
                     <div
-                      key={user.id}
+                      key={ user.id }
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted"
                     >
                       <Avatar>
-                        <AvatarImage src={user.imageUrl} />
-                        <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+                        <AvatarImage src={ user.imageUrl } />
+                        <AvatarFallback>{ getUserInitials(user) }</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{getDisplayName(user)}</p>
+                        <p className="font-medium">{ getDisplayName(user) }</p>
                         <p className="text-sm text-muted-foreground">
-                          {user.email}
+                          { user.email }
                         </p>
                       </div>
                     </div>
-                  ))}
+                  )) }
                 </div>
-              )}
+              ) }
             </div>
-          )}
+          ) }
         </DialogContent>
       </Dialog>
 
       <CardContent className="pt-6">
         <EventComments
-          eventId={eventId || ""}
-          eventOwnerId={eventToRender.createdBy}
+          eventId={ eventId || "" }
+          eventOwnerId={ eventToRender.createdBy }
         />
       </CardContent>
 
       <CardFooter className="flex justify-between items-center pt-6 border-t">
         <div className="flex gap-2">
-          {/* Eksisterende knapper for å delta/forlate arrangement */}
+          {/* Eksisterende knapper for å delta/forlate arrangement */ }
         </div>
-        {userSession && userSession.id !== eventToRender.createdBy && (
-          <EventReportButton eventId={eventId || ""} />
-        )}
+        { userSession && userSession.id !== eventToRender.createdBy && (
+          <EventReportButton eventId={ eventId || "" } />
+        ) }
       </CardFooter>
-      
-      {isAttending && eventToRender.endDate && new Date() > new Date(eventToRender.endDate) && (
-      <ImagesUploader
-        onUploadSuccess={onUploadSuccess}
-        onDeleteSuccess={onDeleteSuccess}
-        thisEventId={eventId} />)}
+
+      { isAttending && eventToRender.endDate && new Date() > new Date(eventToRender.endDate) && (
+        <ImagesUploader
+          onUploadSuccess={ onUploadSuccess }
+          onDeleteSuccess={ onDeleteSuccess }
+          thisEventId={ eventId } />) }
 
       <div className="container py-10">
         <h1 className="text-2xl font-bold mb-6 text-center">Bilder fra arrangement</h1>
-        <ImageSlider eventId={eventId as string} uploadConfirmed={uploadConfirmed} />
+        <ImageSlider eventId={ eventId as string } uploadConfirmed={ uploadConfirmed } />
       </div>
     </div>
   );
