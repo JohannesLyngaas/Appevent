@@ -25,6 +25,7 @@ export interface Event {
   invitedUsers?: string[];
   imageUrl?: string;
   createdAt: string;
+  theme: string;
 }
 
 export interface EventParticipant {
