@@ -9,11 +9,9 @@ import {
   getUserById,
 } from "@/lib/firebase/DatabaseFunksjoner";
 import { AttendanceButtonAlert } from "@/components/event_page/AttendanceButtonAlert";
-import { CloseButton } from "@/components/event_page/CloseButton";
 import type { Event, EventParticipant, User } from "@/types";
 import { getCurrentUserID } from "@/lib/firebase/auth/auth";
 import { useUserSession } from "@/hooks/useUserSession";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +32,10 @@ import {
 } from "@/components/ui/dialog";
 import { EventComments } from "@/components/event_page/EventComments";
 import { EventReportButton } from "@/components/event_page/EventReportButton";
+import ImageSlider from "./ImageSlider";
+import { ImagesUploader } from "./ImagesUploader";
+import { addDoc, collection, deleteDoc, doc } from "firebase/firestore";
+import { firebaseDb } from "@/lib/firebase/config";
 
 export function EventPageCard() {
   const userSession = useUserSession(null);
@@ -51,6 +53,8 @@ export function EventPageCard() {
   const [previewParticipantUsers, setPreviewParticipantUsers] = useState<
     User[]
   >([]);
+  const [uploadConfirmed, setUploadConfirmed] = useState(false);
+  const [imageId, setImageId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchEventWithDates() {
@@ -241,6 +245,57 @@ export function EventPageCard() {
       }
     }
     return eventToRender.createdBy.substring(0, 2).toUpperCase();
+  }
+
+  const handleUploadSuccess = async (url: string, publicId: string) => {
+    if (!eventId) {
+      console.error("No eventId provided!");
+      return;
+    }
+  
+    try {
+      const imagesCollectionRef = collection(firebaseDb, `events/${eventId}/images`);
+  
+      const docRef = await addDoc(imagesCollectionRef, {
+        url,
+        publicId,
+        uploadedAt: new Date(),
+      });
+      
+      setImageId(docRef.id);
+      console.log("Image successfully uploaded to Firestore!");
+    } catch (error) {
+      console.error("Error uploading image to Firestore:", error);
+      alert("Could not save image to Firestore.");
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (!eventId) {
+      console.error("No eventId provided!");
+      return;
+    }
+  
+    try {
+      const imageDocRef = doc(firebaseDb, `events/${eventId}/images/${imageId}`);
+      await deleteDoc(imageDocRef);
+  
+      console.log("Image successfully deleted from Firestore!");
+    } catch (error) {
+      console.error("Error deleting image from Firestore:", error);
+      alert("Could not delete image from Firestore.");
+    }
+  };
+
+  const onUploadSuccess = (url: string, publicId: string) => {
+    console.log("onUploadSuccess triggered:", url, publicId);
+    setUploadConfirmed(true);
+    handleUploadSuccess(url, publicId);
+  };
+
+  const onDeleteSuccess = () => {
+    setUploadConfirmed(false);
+    handleDeleteImage();
   }
 
   if (loading) {
@@ -558,6 +613,17 @@ export function EventPageCard() {
           <EventReportButton eventId={eventId || ""} />
         )}
       </CardFooter>
+      
+      {isAttending && eventToRender.endDate && new Date() > new Date(eventToRender.endDate) && (
+      <ImagesUploader
+        onUploadSuccess={onUploadSuccess}
+        onDeleteSuccess={onDeleteSuccess}
+        thisEventId={eventId} />)}
+
+      <div className="container py-10">
+        <h1 className="text-2xl font-bold mb-6 text-center">Bilder fra arrangement</h1>
+        <ImageSlider eventId={eventId as string} uploadConfirmed={uploadConfirmed} />
+      </div>
     </div>
   );
 }
