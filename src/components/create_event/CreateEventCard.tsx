@@ -1,90 +1,437 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { firebaseDb } from "@/lib/firebase/config";
+import { createEvent } from "@/lib/firebase/DatabaseFunksjoner";
+import { useUserSession } from "@/hooks/useUserSession";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "../ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import type { User } from "@/types";
+import { CloseButton } from "@/components/create_event/CloseButton";
+import { ImageUploader } from "./ImageUploader";
 
-function CreateEventCard() {
+const defaultImageUrl = "https://res.cloudinary.com/dxeluefou/image/upload/v1741207681/party_tqbwhb.jpg";
 
-  // Finner dagens dato i format YYYY-MM-DD
+const eventSchema = z.object({
+  title: z.string().min(3, "Tittel må være minst 3 tegn").max(100),
+  description: z.string().min(5, "Beskrivelse må være minst 5 tegn"),
+  location: z.string().min(3, "Sted må være minst 3 tegn"),
+  eventDate: z.string().min(1, "Dato er påkrevd"),
+  startTime: z.string().min(1, "Starttid er påkrevd"),
+  endTime: z.string().optional(),
+  endDate: z.string().optional(),
+  visibility: z.enum(["public", "private"]),
+  imageUrl: z.string().optional(),
+  theme: z.string().min(1, "Velg et tema"),
+});
+
+const eventThemes = [
+  "Konsert",
+  "Sportsarrangement",
+  "Matfestival",
+  "Dugnad",
+  "Filmvisning",
+  "Workshop",
+  "Kunstutstilling",
+  "Temafest",
+  "Lanseringsevent",
+  "Nettverksmøte",
+];
+
+type EventFormValues = z.infer<typeof eventSchema>;
+
+export default function CreateEventCard() {
+  const userSession = useUserSession(null);
+  const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
+  const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [userSuggestions, setUserSuggestions] = useState<User[]>([]);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [publicId, setPublicId] = useState<string | null>(null);
+
+  const form = useForm<EventFormValues>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      location: "",
+      eventDate: "",
+      startTime: "",
+      endTime: "",
+      endDate: "",
+      visibility: "public",
+      imageUrl: "",
+      theme: "",
+    },
+  });
+
+  const handleDeleteImage = async () => {
+    if (publicId) {
+      try {
+        const response = await fetch("/api/delete-cloudinary-image", {
+          method: "POST",
+          body: JSON.stringify({ publicId }),
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await response.json();
+        if (data.success) {
+          setUploadedImageUrl(null);
+          setPublicId(null);
+          form.setValue("imageUrl", "");
+        } else {
+          toast.error("Feil ved sletting av bilde.");
+        }
+      } catch (error) {
+        console.error("Error deleting image:", error);
+        toast.error("Feil ved sletting av bilde.");
+      }
+    }
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (userSearch.length < 2) {
+        setUserSuggestions([]);
+        return;
+      }
+
+      try {
+        const usersCollection = collection(firebaseDb, "users");
+        const userQuery = query(
+          usersCollection,
+          where("email", ">=", userSearch),
+          where("email", "<=", userSearch + "\uf8ff")
+        );
+        const snapshot = await getDocs(userQuery);
+        setUserSuggestions(
+          snapshot.docs
+            .filter((u) => u.id !== userSession?.id)
+            .map((doc) => ({ id: doc.id, ...doc.data() } as User))
+        );
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, [userSearch, userSession?.id]);
+
+  const handleUserSelect = (user: User) => {
+    if (!invitedEmails.includes(user.email)) {
+      setInvitedEmails([...invitedEmails, user.email]);
+    }
+    setUserSearch("");
+    setUserSuggestions([]);
+  };
+
+  const handleRemoveInvite = (email: string) => {
+    setInvitedEmails(invitedEmails.filter((e) => e !== email));
+  };
+
+  async function onSubmit(data: EventFormValues) {
+    try {
+      const newEventId = await createEvent(
+        {
+          ...data,
+          imageUrl: uploadedImageUrl || defaultImageUrl,
+          endTime: data.endTime || "",
+          endDate: data.endDate || "",
+          createdAt: new Date().toISOString(),
+          theme: data.theme || "",
+        },
+        invitedEmails,
+        userSession?.id || ""
+      );
+
+      toast.success("Arrangement opprettet!", {
+        description: `Event: ${data.title}`,
+      });
+      router.push(`/event_page?id=${newEventId}&fromCreate=true`);
+    } catch (error) {
+      toast.error("Feil ved opprettelse av arrangement.");
+      console.error("Feil ved opprettelse av arrangement:", error);
+    }
+  }
 
   return (
-    <form className="flex flex-col items-center">
-        <Input
-          type="text"
-          placeholder="Tittel"
-          className="h-20 w-1/3 text-center border-border
-                     text-4xl text-text"
-        />
-        <div className="flex flex-row gap-x-20 mt-8">
-          <label className="flex flex-col text-xl text-text">
-            Når?
-            <div className="flex gap-x-2">
-              <Input
-                type="date"
-                placeholder="Dato"
-                min={today}
-                className="h-10 text-center text-xl rounded-md"
+    <div className="flex flex-col gap-2 max-w-2xl w-full">
+      <CloseButton onClick={ handleDeleteImage } publicId={ publicId } />
+      <Form { ...form }>
+        <form
+          onSubmit={ form.handleSubmit(onSubmit) }
+          className="flex flex-col justify-center items-center space-y-4 bg-card border rounded-lg p-3"
+        >
+          <div className="w-full items-center flex flex-col">
+            <FormLabel className="text-base">Last opp bilde</FormLabel>
+            <ImageUploader
+              isOptional={ true }
+              onUploadSuccess={ (url, id) => {
+                setUploadedImageUrl(url);
+                setPublicId(id);
+                form.setValue("imageUrl", url);
+              } }
+              onDeleteSuccess={ () => {
+                setUploadedImageUrl(null);
+                setPublicId(null);
+                form.setValue("imageUrl", "");
+              } }
+            />
+          </div>
+
+          <div className="flex flex-col w-full gap-y-5">
+            <FormField
+              control={ form.control }
+              name="title"
+              render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">Tittel</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Skriv inn tittel" { ...field } />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) }
+            />
+
+            <FormField
+              control={ form.control }
+              name="description"
+              render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">Beskrivelse</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Skriv en beskrivelse" { ...field } />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) }
+            />
+
+            <FormField
+              control={ form.control }
+              name="location"
+              render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">Sted</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Skriv inn sted" { ...field } />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) }
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={ form.control }
+                name="eventDate"
+                render={ ({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Startdato</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        min={ today }
+                        value={ field.value }
+                        onChange={ (e) => {
+                          field.onChange(e.target.value);
+                          form.setValue("endDate", "");
+                        } }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                ) }
               />
-              <Input
-                type="time"
-                className="h-10 text-center text-xl rounded-md"
+
+              <FormField
+                control={ form.control }
+                name="startTime"
+                render={ ({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Starttid</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="time"
+                        min={
+                          form.watch("eventDate") === today
+                            ? new Date().toISOString().slice(11, 16)
+                            : undefined
+                        }
+                        value={ field.value }
+                        onChange={ (e) => {
+                          field.onChange(e.target.value);
+                          form.setValue("endTime", "");
+                        } }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                ) }
               />
             </div>
-          </label>
-          <label className="flex flex-col text-xl text-text">
-            Hvor?
-            <Input
-              type="text"
-              placeholder="Sted"
-              className="h-10 text-center text-xl rounded-md"
-            />
-          </label>
-        </div>
-        <textarea
-          placeholder="Besrivelse"
-          className="h-80 w-1/2 mt-10 placeholder-placeholder text-xl pl-4 pt-4 border border-border rounded-md"
-        />
-        <div className="mt-8 flex flex-col items-center">
-          <label className="text-xl text-text mb-2">Last opp bilde</label>
-          <div className="flex items-center gap-4">
-            <Input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              id="imageUpload"
-            />
-            <label
-              htmlFor="imageUpload"
-              className="cursor-pointer bg-[#FEFFF4] border border-border rounded-md p-3 flex items-center gap-2"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-[#96A074]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <FormField
+                control={ form.control }
+                name="endDate"
+                render={ ({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Sluttdato</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        min={ form.watch("eventDate") || today }
+                        value={ field.value }
+                        onChange={ (e) => field.onChange(e.target.value) }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                ) }
+              />
+
+              <FormField
+                control={ form.control }
+                name="endTime"
+                render={ ({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Sluttid</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="time"
+                        min={
+                          form.watch("endDate") === form.watch("eventDate")
+                            ? form.watch("startTime")
+                            : undefined
+                        }
+                        value={ field.value }
+                        onChange={ (e) => field.onChange(e.target.value) }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                ) }
+              />
+            </div>
+            <div className="flex flex-row justify-between">
+              <FormField
+                control={ form.control }
+                name="visibility"
+                render={ ({ field }) => (
+                  <FormItem className="flex flex-col self-start">
+                    <FormLabel className="text-base">
+                      Synlighet:{ " " }
+                      { field.value === "private" ? "Privat" : "Offentlig" }
+                    </FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={ field.value === "private" }
+                        onCheckedChange={ (checked: boolean) =>
+                          field.onChange(checked ? "private" : "public")
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                ) }
+              />
+              <FormField
+                control={ form.control }
+                name="theme"
+                render={ ({ field }) => (
+                  <FormItem className="self-end w-auto">
+                    <FormLabel className="text-base">Velg tema</FormLabel>
+                    <FormControl>
+                      <select
+                        { ...field }
+                        className="border p-2 rounded w-full bg-inherit"
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      >
+                        <option value="" disabled>
+                          Velg et tema
+                        </option>
+                        { eventThemes.map((theme, index) => (
+                          <option key={ index } value={ theme }>
+                            { theme }
+                          </option>
+                        )) }
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                ) }
+              />
+            </div>
+            <FormItem>
+              <FormLabel className="text-base">Inviter brukere</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Søk etter e-post..."
+                  value={ userSearch }
+                  onChange={ (e) => setUserSearch(e.target.value) }
                 />
-              </svg>
-              <span className="text-text">Velg bilde</span>
-            </label>
-            <p className="text-sm text-text">Ingen fil valgt</p>
+              </FormControl>
+            </FormItem>
+            <div className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-1 max-h-44 overflow-auto">
+                { userSuggestions.map((user) => (
+                  <Button
+                    key={ user.id }
+                    variant={ "ghost" }
+                    type="button"
+                    className="max-w-fit hover:scale-100"
+                    onClick={ () => handleUserSelect(user) }
+                  >{ `${user.firstName}: ${user.email}` }</Button>
+                )) }
+              </ul>
+
+              <p className="text-base font-medium">Inviterte brukere: </p>
+              <div className="flex flex-row flex-wrap">
+                { invitedEmails.map((email) => (
+                  <Badge
+                    key={ email }
+                    className="mr-2 mb-2 max-w-fit p-1 px-2 hover:bg-slate-950"
+                  >
+                    { email }{ " " }
+                    <span
+                      className="cursor-pointer ml-1"
+                      onClick={ () => handleRemoveInvite(email) }
+                    >
+                      ✕
+                    </span>
+                  </Badge>
+                )) }
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-4 my-10">
-          <Button variant={"outline"} className="py-6 rounded-lg text-white">
+          <Button
+            variant={ "default" }
+            type="submit"
+            className="w-full hover:scale-100 text-lg font-semibold"
+          >
             Opprett arrangement
           </Button>
-          <button className="p-2 rounded-lg bg-[#E34E4E] text-white border-[#c03737] border-2">
-            Slett arrangement
-          </button>
-        </div>
-      </form>
-  )
+        </form>
+      </Form>
+    </div>
+  );
 }
-
-export { CreateEventCard };

@@ -13,18 +13,12 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/om-oss"
+                  href="/about"
                   className="text-muted-foreground hover:text-primary">
                   Om oss
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/kontakt"
-                  className="text-muted-foreground hover:text-primary">
-                  Kontakt
-                </Link>
-              </li>
+
             </ul>
           </div>
 

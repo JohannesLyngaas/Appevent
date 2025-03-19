@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Brukere
+    match /users/{userId} {
+      allow read: if true; // Alle kan lese brukerprofiler
+      allow create: if request.auth != null && request.auth.uid == userId; // Bare brukeren kan opprette seg selv
+      allow update: if request.auth != null && request.auth.uid == userId; // Brukeren kan oppdatere seg selv
+      allow delete: if request.auth != null &&
+        (request.auth.uid == userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
+    }
+
+    // Arrangementer
+    match /events/{eventId} {
+      allow read: if true; // Alle kan lese arrangementer
+      allow create, write: if request.auth != null;
+      allow update, delete: if request.auth != null && (
+        resource.data != null && (
+          request.auth.uid == resource.data.createdBy ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+        )
+      );
+    }
+    
+    // Inviterte brukere
+    match /events/{eventId} {
+    	match /invitedUsers/{userId} {
+        allow read: if request.auth != null;
+        allow create, write: if request.auth != null;
+        allow update, delete: if request.auth != null && (
+          resource.data != null && (
+           	request.auth.uid == resource.data.userId ||
+          	get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.createdBy == request.auth.uid
+        	)
+        );
+      }
+    }
+    
+    // Påmeldte brukere, regler som a
+    match /events/{eventId} {
+    	match /participants/{userId} {
+        allow read: if request.auth != null;
+        allow create, write: if request.auth != null;
+        allow update, delete: if request.auth != null && (
+          resource.data != null && (
+           	request.auth.uid == resource.data.userId ||
+          	get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.createdBy == request.auth.uid
+        	)
+        );
+      }
+    }
+
+    // Kommentarer
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (
+        resource.data != null && (
+          request.auth.uid == resource.data.userId ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+        )
+      );
+    }
+
+    // Rapportering
+    match /reports/{reportId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+  }
+}

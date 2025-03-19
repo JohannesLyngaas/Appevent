@@ -10,45 +10,108 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  registerEventParticipant,
+  leaveEvent,
+  removeEventParticipant,
+} from "@/lib/firebase/DatabaseFunksjoner";
+import { getCurrentUserID } from "@/lib/firebase/auth/auth";
+import { toast } from "sonner";
 
 interface AttendanceButtonAlertProps {
   isAttending: boolean;
   onAttend: () => void;
   onCancel: () => void;
+  eventId: string;
 }
 
-export function AttendanceButtonAlert({ isAttending, onAttend, onCancel }: AttendanceButtonAlertProps) {
+export function AttendanceButtonAlert({
+  isAttending,
+  onAttend,
+  onCancel,
+  eventId,
+}: AttendanceButtonAlertProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleAttendClick = async () => {
+    try {
+      setIsProcessing(true);
+      const userId = await getCurrentUserID();
+      console.log("Current user ID:", userId);
+
+      if (!userId) {
+        alert("Du må være logget inn for å melde deg på");
+        return;
+      }
+
+      console.log(`Attempting to register user ${userId} for event ${eventId}`);
+      await registerEventParticipant(userId, eventId);
+      onAttend();
+      toast.success("Du er nå påmeldt!");
+    } catch (error) {
+      console.error("Error registering for event:", error);
+      // Show more specific error message
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        alert("Det oppstod en feil. Prøv igjen senere.");
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleCancelClick = () => {
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmCancel = () => {
-    onCancel();
-    setShowConfirmDialog(false);
+  const handleConfirmCancel = async () => {
+    try {
+      setIsProcessing(true);
+      const userId = await getCurrentUserID();
+      if (userId) {
+        await removeEventParticipant(userId, eventId);
+      }
+      onCancel();
+      setShowConfirmDialog(false);
+      toast.success("Du er nå meldt av!");
+    } catch (error) {
+      console.error("Error cancelling registration:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        alert("Det oppstod en feil ved avmelding.");
+      }
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
     <>
       {!isAttending ? (
-        <button
-          onClick={onAttend}
-          className="p-3 rounded-lg bg-[#959D5A] text-white"
+        <Button
+          onClick={handleAttendClick}
+          className="w-full"
+          disabled={isProcessing}
         >
-          Delta på arrangement
-        </button>
+          {isProcessing ? "Behandler..." : "Meld deg på"}
+        </Button>
       ) : (
-        <button
+        <Button
           onClick={handleCancelClick}
-          className="p-3 rounded-lg bg-[#E34E4E] text-white border-[#c03737] border-2"
+          variant="destructive"
+          className="w-full"
+          disabled={isProcessing}
         >
-          Meld deg av
-        </button>
+          {isProcessing ? "Behandler..." : "Meld deg av"}
+        </Button>
       )}
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent className="bg-[#FEFFF4] border-2 border-[#96A074]">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Er du sikker?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -56,12 +119,10 @@ export function AttendanceButtonAlert({ isAttending, onAttend, onCancel }: Atten
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-[#FEFFF4] border-2 border-[#96A074] text-[#96A074]">
-              Avbryt
-            </AlertDialogCancel>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmCancel}
-              className="bg-[#E34E4E] text-white border-[#c03737] border-2"
+              className="bg-destructive text-destructive-foreground"
             >
               Meld deg av
             </AlertDialogAction>
@@ -70,4 +131,4 @@ export function AttendanceButtonAlert({ isAttending, onAttend, onCancel }: Atten
       </AlertDialog>
     </>
   );
-} 
+}

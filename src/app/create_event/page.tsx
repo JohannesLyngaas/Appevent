@@ -1,11 +1,9 @@
-import { CloseButton } from "@/components/create_event/CloseButton";
-import { CreateEventCard } from "@/components/create_event/CreateEventCard";
+import CreateEventCard from "@/components/create_event/CreateEventCard";
 
 export default function CreateEventPage() {
   return (
+    <div className="flex size-full justify-center">
 
-    <div className="min-h-screen min-w-screen grid grid-cols-1">
-      <CloseButton />
       <CreateEventCard />
     </div>
   );

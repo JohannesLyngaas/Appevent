@@ -1,28 +1,30 @@
 'use client';
 
 import Link from "next/link";
-import { useUserSession } from '@/hooks/user-user-session';
-import { signInWithGoogle, signOutWithGoogle } from '@/lib/firebase/auth';
-import { createSession, removeSession } from '@/lib/firebase/auth-actions';
+import { useUserSession } from '@/hooks/useUserSession';
+import { getCurrentUserID, signOutUser } from '@/lib/firebase/auth/auth';
+import { removeSession } from '@/lib/firebase/auth/sessionHandling';
 import { Button } from "../ui/button";
+import { useRouter } from "next/navigation";
+
 
 type HeaderProps = {
   session: string | null;
 }
 
 export function Header({ session }: HeaderProps) {
-  const userSessionId = useUserSession(session);
+  const userId = getCurrentUserID();
+  const router = useRouter();
+  const userSession = useUserSession(session);
 
-  const handleSignIn = async () => {
-    const userUid = await signInWithGoogle();
-    if (userUid) {
-      await createSession(userUid);
-    }
-  };
 
+  {/* Denne funksjonen henter en funksjon fra lib/auth.ts og auth-actions og sier
+    til den hentede funksjonen hva som skal skje hvis bruker trykker på "logg ut"
+    knappen. - Moa  */}
   const handleSignOut = async () => {
-    await signOutWithGoogle();
+    await signOutUser();
     await removeSession();
+    router.push("/");
   };
 
   return (
@@ -32,26 +34,42 @@ export function Header({ session }: HeaderProps) {
       </Link>
 
       <div className="flex gap-x-5">
-        <Link href="/create_event">
-          <Button>
-            Opprett arrangement
-          </Button>
-        </Link>
+        { userSession &&
+          <Link href="/create_event">
+            <Button variant={ "default" }>
+              Opprett arrangement
+            </Button>
+          </Link>
+        }
 
+        { userSession?.role === "admin" && (
+          <Link href="/admin">
+            <Button variant="default">Admin</Button>
+          </Link>
+        ) }
+        { userSession &&
+          <Link href="/profile" className="">
+            <Button variant={ "default" } >
+              Min profil
+            </Button>
+          </Link>
+        }
 
-        { !userSessionId ? (
+        { !userSession ? (
           <Link href="/login" >
-            <Button onClick={ handleSignIn }>
+            <Button variant={ "default" }>
               Logg inn
             </Button>
           </Link>
         ) : (
+
           <Link href="/login" className="">
             <Button variant={ 'default' } onClick={ handleSignOut } >
               Logg ut
             </Button>
           </Link>
         ) }
+
       </div>
     </div>
   )
